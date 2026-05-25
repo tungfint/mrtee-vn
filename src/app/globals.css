@@ -75,3 +75,19 @@ body {
   font-size: 0.875em;
   padding: 0.1rem 0.3rem;
 }
+
+.markdown.markdown-dark,
+.markdown.markdown-dark h2,
+.markdown.markdown-dark h3,
+.markdown.markdown-dark blockquote {
+  color: #f8fafc;
+}
+
+.markdown.markdown-dark a {
+  color: #a7f3d0;
+}
+
+.markdown.markdown-dark code {
+  background: rgb(255 255 255 / 0.16);
+  color: #ecfdf5;
+}

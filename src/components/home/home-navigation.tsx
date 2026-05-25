@@ -16,7 +16,7 @@ const links = [
   {
     title: "Tin2023",
     description: "Kỷ niệm, hồ sơ học sinh và thành tích của lớp.",
-    href: "/class/tin2023",
+    href: "/tin2023",
     icon: UsersRound,
     backgroundImage:
       "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=80",
@@ -24,7 +24,7 @@ const links = [
   {
     title: "Tin2326",
     description: "Không gian lưu giữ hành trình cấp ba của lớp.",
-    href: "/class/tin2326",
+    href: "/tin2326",
     icon: GraduationCap,
     backgroundImage:
       "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=900&q=80",
@@ -32,7 +32,7 @@ const links = [
   {
     title: "HSG Tin",
     description: "Đội tuyển học sinh giỏi Tin học theo từng năm.",
-    href: "/team/hsg-tin",
+    href: "/hsg-tin",
     icon: Trophy,
     backgroundImage:
       "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=900&q=80",
@@ -40,7 +40,7 @@ const links = [
   {
     title: "FTC",
     description: "Dự án, robot, hình ảnh và dấu mốc thi đấu.",
-    href: "/team/ftc",
+    href: "/ftc",
     icon: Trophy,
     backgroundImage:
       "https://images.unsplash.com/photo-1535378620166-273708d44e4c?auto=format&fit=crop&w=900&q=80",
@@ -48,7 +48,7 @@ const links = [
   {
     title: "AI",
     description: "Các hoạt động nghiên cứu, thử nghiệm và sản phẩm AI.",
-    href: "/team/ai",
+    href: "/ai",
     icon: BookOpenText,
     backgroundImage:
       "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=900&q=80",

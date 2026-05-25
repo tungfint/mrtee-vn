@@ -1,69 +1,111 @@
-import { CalendarDays, GraduationCap, Heart, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  BriefcaseBusiness,
+  CalendarDays,
+  GraduationCap,
+  Heart,
+  Sparkles,
+} from "lucide-react";
+import Link from "next/link";
 
 import { MediaStrip } from "@/components/content/media-strip";
 import { RichContent } from "@/components/content/rich-content";
 import { BackgroundCard } from "@/components/ui/background-card";
+import { ImageLightboxButton } from "@/components/ui/image-lightbox";
+import { prisma } from "@/lib/prisma";
 
-const student = {
-  fullName: "Nguyễn Minh Anh",
-  nickname: "Min",
-  dob: "12/08/2008",
-  hobbies: "Thiết kế web, chụp ảnh, đọc truyện khoa học viễn tưởng",
-  futureGoal: "Khoa học máy tính - Đại học Bách khoa",
-  avatar:
-    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80",
-  photoWithTeacher:
-    "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=900&q=80",
+export const dynamic = "force-dynamic";
+
+const fallbackAvatar =
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=900&q=80";
+
+const fallbackStudent = {
+  avatar: fallbackAvatar,
+  coverImage: fallbackAvatar,
   customPhoto1:
     "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
   customPhoto2:
     "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+  dob: "12/08/2008",
+  fullName: "Nguyễn Minh Anh",
+  futureGoal: "Khoa học máy tính - Đại học Bách khoa",
+  hobbies: "Thiết kế web, chụp ảnh, đọc truyện khoa học viễn tưởng",
+  nickname: "Min",
+  photoWithTeacher:
+    "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=900&q=80",
+  postGraduateWork: "",
+  university: "Đại học Bách khoa",
+  yearbookMessage:
+    "Em nhớ nhất là những buổi cả nhóm ở lại sửa project đến khi trời tối.",
 };
 
-const imageSlots = [
-  { label: "Ảnh đại diện", url: student.avatar },
-  { label: "Ảnh cùng thầy", url: student.photoWithTeacher },
-  { label: "Khoảnh khắc 1", url: student.customPhoto1 },
-  { label: "Khoảnh khắc 2", url: student.customPhoto2 },
-];
-
-const yearbookPosts = [
+const fallbackPosts = [
   {
-    title: "Một buổi chiều ở phòng Tin",
-    format: "MARKDOWN" as const,
     content: `
 Em nhớ nhất là những buổi cả nhóm ở lại sửa project đến khi trời tối. Có lúc
 code chạy sai rất lâu, nhưng khi tìm được lỗi thì cả bàn cùng reo lên.
 
 > Cảm ơn thầy vì đã cho tụi em được thử, được sai và được làm lại.
 `,
+    contentFormat: "MARKDOWN" as const,
+    id: "fallback-yearbook",
     media: [
       {
-        type: "IMAGE" as const,
-        url: student.customPhoto1,
         title: "Góc làm project",
+        type: "IMAGE" as const,
+        url: fallbackStudent.customPhoto1,
       },
       {
+        title: "Thư mục ảnh kỷ niệm",
         type: "LINK" as const,
         url: "https://drive.google.com",
-        title: "Thư mục ảnh kỷ niệm",
       },
     ],
-  },
-  {
-    title: "Lưu bút bằng HTML",
-    format: "HTML" as const,
-    content:
-      "<p>Một bài lưu bút khác có thể dùng <strong>HTML đã được làm sạch</strong>, nhúng link, ảnh hoặc video theo cấu trúc media đi kèm.</p>",
-    media: [
-      {
-        type: "VIDEO" as const,
-        url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-        caption: "Một video ngắn trong bài lưu bút",
-      },
-    ],
+    title: "Một buổi chiều ở phòng Tin",
   },
 ];
+
+type MediaItemInput = {
+  caption?: string | null;
+  title?: string | null;
+  type: "IMAGE" | "VIDEO" | "AUDIO" | "LINK" | "FILE";
+  url: string;
+};
+
+function mediaItems(items: MediaItemInput[]) {
+  return items.map((item) => ({
+    caption: item.caption ?? undefined,
+    title: item.title ?? undefined,
+    type: item.type,
+    url: item.url,
+  }));
+}
+
+function formatDate(value?: Date | null) {
+  return value
+    ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium" }).format(value)
+    : "";
+}
+
+async function loadStudent(id: string) {
+  try {
+    return await prisma.studentProfile.findFirst({
+      include: {
+        memoryPosts: {
+          include: { media: { orderBy: { sortOrder: "asc" } } },
+          orderBy: { updatedAt: "desc" },
+          where: { publishedAt: { not: null } },
+        },
+        user: true,
+      },
+      where: {
+        OR: [{ id }, { userId: id }],
+      },
+    });
+  } catch {
+    return null;
+  }
+}
 
 export default async function StudentProfilePage({
   params,
@@ -71,24 +113,86 @@ export default async function StudentProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const profile = await loadStudent(id);
+  const student = profile
+    ? {
+        avatar: profile.avatar ?? fallbackAvatar,
+        coverImage: profile.coverImage ?? profile.avatar ?? fallbackAvatar,
+        customPhoto1: profile.customPhoto1 ?? fallbackStudent.customPhoto1,
+        customPhoto2: profile.customPhoto2 ?? fallbackStudent.customPhoto2,
+        dob: formatDate(profile.dob),
+        fullName: profile.fullName,
+        futureGoal: profile.futureGoal ?? "",
+        hobbies: profile.hobbies ?? "",
+        nickname: profile.nickname ?? "",
+        photoWithTeacher:
+          profile.photoWithTeacher ?? fallbackStudent.photoWithTeacher,
+        postGraduateWork: profile.postGraduateWork ?? "",
+        university: profile.university ?? "",
+        yearbookMessage: profile.yearbookMessage ?? "",
+      }
+    : fallbackStudent;
+  const posts = profile?.memoryPosts.length ? profile.memoryPosts : fallbackPosts;
+
+  const imageSlots = [
+    {
+      label: "Ảnh đại diện",
+      position: profile?.avatarCrop ?? "center",
+      url: student.avatar,
+    },
+    {
+      label: "Ảnh cùng thầy",
+      position: profile?.photoWithTeacherCrop ?? "center",
+      url: student.photoWithTeacher,
+    },
+    {
+      label: "Khoảnh khắc 1",
+      position: profile?.customPhoto1Crop ?? "center",
+      url: student.customPhoto1,
+    },
+    {
+      label: "Khoảnh khắc 2",
+      position: profile?.customPhoto2Crop ?? "center",
+      url: student.customPhoto2,
+    },
+  ];
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <section className="relative overflow-hidden bg-slate-950 text-white">
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-45"
-          style={{ backgroundImage: `url(${student.avatar})` }}
+          className="absolute inset-0 bg-cover opacity-45"
+          style={{
+            backgroundImage: `url(${student.coverImage})`,
+            backgroundPosition: profile?.coverImageCrop ?? "center",
+          }}
         />
         <div className="absolute inset-0 bg-slate-950/58" />
+        <ImageLightboxButton
+          className="absolute right-5 top-5 z-20"
+          imageUrl={student.coverImage}
+          label="Xem ảnh bìa"
+        />
         <div className="relative mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:px-10">
           <p className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-2 text-sm font-medium text-emerald-100 ring-1 ring-white/15">
             <Sparkles aria-hidden className="h-4 w-4" />
-            Hồ sơ học sinh #{id}
+            Hồ sơ học sinh #{profile?.id ?? id}
           </p>
           <h1 className="mt-5 text-4xl font-semibold sm:text-6xl">
             {student.fullName}
           </h1>
-          <p className="mt-3 text-xl text-emerald-100">{student.nickname}</p>
+          {student.nickname ? (
+            <p className="mt-3 text-xl text-emerald-100">{student.nickname}</p>
+          ) : null}
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link
+              className="inline-flex items-center gap-2 rounded-md bg-white/12 px-4 py-2 text-sm font-semibold text-white ring-1 ring-white/25 hover:bg-white/20"
+              href="/"
+            >
+              <ArrowLeft aria-hidden className="h-4 w-4" />
+              Trang chủ
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -96,10 +200,12 @@ export default async function StudentProfilePage({
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {imageSlots.map((slot) => (
             <BackgroundCard
-              key={slot.label}
               backgroundImage={slot.url}
+              backgroundPosition={slot.position}
               className="aspect-[4/5] p-4 shadow-xl shadow-slate-900/15"
-              overlayClassName="bg-slate-950/34"
+              key={slot.label}
+              overlayClassName="bg-slate-950/16"
+              showImageAction
             >
               <div className="flex h-full items-end">
                 <span className="rounded-md bg-white/92 px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm">
@@ -114,36 +220,68 @@ export default async function StudentProfilePage({
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg shadow-slate-900/5">
             <h2 className="text-xl font-semibold">Thông tin cơ bản</h2>
             <dl className="mt-5 space-y-4 text-sm">
-              <div className="flex gap-3">
-                <CalendarDays
-                  aria-hidden
-                  className="mt-0.5 h-4 w-4 text-emerald-700"
-                />
-                <div>
-                  <dt className="text-slate-500">Ngày sinh</dt>
-                  <dd className="font-medium">{student.dob}</dd>
+              {student.dob ? (
+                <div className="flex gap-3">
+                  <CalendarDays
+                    aria-hidden
+                    className="mt-0.5 h-4 w-4 text-emerald-700"
+                  />
+                  <div>
+                    <dt className="text-slate-500">Ngày sinh</dt>
+                    <dd className="font-medium">{student.dob}</dd>
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-3">
-                <Heart
-                  aria-hidden
-                  className="mt-0.5 h-4 w-4 text-emerald-700"
-                />
-                <div>
-                  <dt className="text-slate-500">Sở thích</dt>
-                  <dd className="font-medium">{student.hobbies}</dd>
+              ) : null}
+              {student.hobbies ? (
+                <div className="flex gap-3">
+                  <Heart
+                    aria-hidden
+                    className="mt-0.5 h-4 w-4 text-emerald-700"
+                  />
+                  <div>
+                    <dt className="text-slate-500">Sở thích</dt>
+                    <dd className="font-medium">{student.hobbies}</dd>
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-3">
-                <GraduationCap
-                  aria-hidden
-                  className="mt-0.5 h-4 w-4 text-emerald-700"
-                />
-                <div>
-                  <dt className="text-slate-500">Mục tiêu tương lai</dt>
-                  <dd className="font-medium">{student.futureGoal}</dd>
+              ) : null}
+              {student.university ? (
+                <div className="flex gap-3">
+                  <GraduationCap
+                    aria-hidden
+                    className="mt-0.5 h-4 w-4 text-emerald-700"
+                  />
+                  <div>
+                    <dt className="text-slate-500">Đại học</dt>
+                    <dd className="font-medium">{student.university}</dd>
+                  </div>
                 </div>
-              </div>
+              ) : null}
+              {student.postGraduateWork ? (
+                <div className="flex gap-3">
+                  <BriefcaseBusiness
+                    aria-hidden
+                    className="mt-0.5 h-4 w-4 text-emerald-700"
+                  />
+                  <div>
+                    <dt className="text-slate-500">
+                      Sau đại học / Công việc
+                    </dt>
+                    <dd className="font-medium">{student.postGraduateWork}</dd>
+                  </div>
+                </div>
+              ) : null}
+              {student.futureGoal ? (
+                <div className="flex gap-3">
+                  <GraduationCap
+                    aria-hidden
+                    className="mt-0.5 h-4 w-4 text-emerald-700"
+                  />
+                  <div>
+                    <dt className="text-slate-500">Mục tiêu tương lai</dt>
+                    <dd className="font-medium">{student.futureGoal}</dd>
+                  </div>
+                </div>
+              ) : null}
             </dl>
           </div>
 
@@ -156,18 +294,27 @@ export default async function StudentProfilePage({
                 Những bài viết của học sinh
               </h2>
             </div>
-            {yearbookPosts.map((post) => (
+            {student.yearbookMessage ? (
+              <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg shadow-slate-900/5">
+                <h3 className="text-xl font-semibold">Lưu bút ngắn</h3>
+                <RichContent
+                  className="mt-4"
+                  content={student.yearbookMessage}
+                />
+              </article>
+            ) : null}
+            {posts.map((post) => (
               <article
-                key={post.title}
                 className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg shadow-slate-900/5"
+                key={post.id}
               >
                 <h3 className="text-xl font-semibold">{post.title}</h3>
                 <RichContent
                   className="mt-4"
                   content={post.content}
-                  format={post.format}
+                  format={post.contentFormat}
                 />
-                <MediaStrip items={post.media} />
+                <MediaStrip items={mediaItems(post.media)} />
               </article>
             ))}
           </div>

@@ -25,6 +25,7 @@ enum ContentFormat {
 
 enum MemoryPostType {
   CLASS_INTRO
+  CLASS_STORY
   STUDENT_YEARBOOK
   TEAM_STORY
 }
@@ -50,6 +51,7 @@ model User {
   classroom Class?  @relation("ClassStudents", fields: [classId], references: [id], onDelete: SetNull)
 
   monitoredClass Class?          @relation("ClassMonitor")
+  monitoredTeams Team[]          @relation("TeamMonitor")
   profile        StudentProfile?
   posts          Post[]          @relation("PostAuthor")
   memoryPosts    MemoryPost[]    @relation("MemoryPostAuthor")
@@ -63,15 +65,17 @@ model User {
 }
 
 model Class {
-  id                  String  @id @default(cuid())
-  name                String  @unique
-  slug                String  @unique
-  slogan              String?
-  coverImage          String?
-  cardBackgroundImage String?
-  introduction        String? @db.Text
-  achievements        String? @db.Text
-  externalMediaUrl    String?
+  id                      String  @id @default(cuid())
+  name                    String  @unique
+  slug                    String  @unique
+  slogan                  String?
+  coverImage              String?
+  coverImageCrop          String?
+  cardBackgroundImage     String?
+  cardBackgroundImageCrop String?
+  introduction            String? @db.Text
+  achievements            String? @db.Text
+  externalMediaUrl        String?
 
   monitorId   String?      @unique
   monitor     User?        @relation("ClassMonitor", fields: [monitorId], references: [id], onDelete: SetNull)
@@ -87,35 +91,54 @@ model StudentProfile {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  avatar              String?
-  photoWithTeacher    String?
-  customPhoto1        String?
-  customPhoto2        String?
-  cardBackgroundImage String?
+  avatar               String?
+  photoWithTeacher     String?
+  customPhoto1         String?
+  customPhoto2         String?
+  coverImage           String?
+  cardBackgroundImage  String?
+  avatarCrop           String?
+  photoWithTeacherCrop String?
+  customPhoto1Crop     String?
+  customPhoto2Crop     String?
+  coverImageCrop       String?
 
-  fullName        String
-  nickname        String?
-  dob             DateTime? @db.Date
-  hobbies         String?   @db.Text
-  futureGoal      String?   @db.Text
-  yearbookMessage String?   @db.Text
+  fullName         String
+  nickname         String?
+  dob              DateTime? @db.Date
+  school           String?
+  university       String?
+  postGraduateWork String?
+  hobbies          String?   @db.Text
+  futureGoal       String?   @db.Text
+  yearbookMessage  String?   @db.Text
 
   teamMemberships TeamMember[]
   memoryPosts     MemoryPost[]
+  yearRecords     StudentYearRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Team {
-  id              String       @id @default(cuid())
-  category        TeamCategory
-  year            Int
-  description     String?      @db.Text
-  achievements    String?      @db.Text
-  backgroundImage String?
-  galleryImages   String[]     @default([])
+  id                      String        @id @default(cuid())
+  category                TeamCategory
+  year                    Int
+  description             String?       @db.Text
+  achievements            String?       @db.Text
+  introContent            String?       @db.Text
+  introFormat             ContentFormat @default(MARKDOWN)
+  coverImage              String?
+  coverImageCrop          String?
+  cardBackgroundImage     String?
+  cardBackgroundImageCrop String?
+  backgroundImage         String?
+  backgroundImageCrop     String?
+  galleryImages           String[]      @default([])
 
+  monitorId   String?
+  monitor     User?        @relation("TeamMonitor", fields: [monitorId], references: [id], onDelete: SetNull)
   members     TeamMember[]
   memoryPosts MemoryPost[]
 
@@ -124,6 +147,35 @@ model Team {
 
   @@unique([category, year])
   @@index([category, year])
+}
+
+model StudentYearRecord {
+  id               String         @id @default(cuid())
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  year             Int
+  fullName         String
+  className        String?
+  school           String?
+  email            String?
+  nickname         String?
+  dob              DateTime? @db.Date
+  avatar           String?
+  photoWithTeacher String?
+  customPhoto1     String?
+  customPhoto2     String?
+  coverImage       String?
+  university       String?
+  postGraduateWork String?
+  futureGoal       String?   @db.Text
+  shortMessage     String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentProfileId, year])
+  @@index([year])
 }
 
 model TeamMember {
@@ -142,15 +194,17 @@ model TeamMember {
 }
 
 model Post {
-  id              String        @id @default(cuid())
-  title           String
-  slug            String        @unique
-  excerpt         String?
-  coverImage      String?
-  backgroundImage String?
-  content         String        @db.Text
-  contentFormat   ContentFormat @default(MARKDOWN)
-  publishedAt     DateTime?
+  id                  String        @id @default(cuid())
+  title               String
+  slug                String        @unique
+  excerpt             String?
+  coverImage          String?
+  coverImageCrop      String?
+  backgroundImage     String?
+  backgroundImageCrop String?
+  content             String        @db.Text
+  contentFormat       ContentFormat @default(MARKDOWN)
+  publishedAt         DateTime?
 
   authorId String?
   author   User?   @relation("PostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
@@ -162,16 +216,18 @@ model Post {
 }
 
 model MemoryPost {
-  id              String         @id @default(cuid())
-  title           String
-  slug            String?        @unique
-  type            MemoryPostType
-  excerpt         String?
-  coverImage      String?
-  backgroundImage String?
-  content         String         @db.Text
-  contentFormat   ContentFormat  @default(MARKDOWN)
-  publishedAt     DateTime?
+  id                  String         @id @default(cuid())
+  title               String
+  slug                String?        @unique
+  type                MemoryPostType
+  excerpt             String?
+  coverImage          String?
+  coverImageCrop      String?
+  backgroundImage     String?
+  backgroundImageCrop String?
+  content             String         @db.Text
+  contentFormat       ContentFormat  @default(MARKDOWN)
+  publishedAt         DateTime?
 
   authorId String?
   author   User?   @relation("MemoryPostAuthor", fields: [authorId], references: [id], onDelete: SetNull)

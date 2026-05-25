@@ -27,8 +27,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="min-h-screen bg-slate-50 antialiased">{children}</body>
+    <html
+      className={`${geistSans.variable} ${geistMono.variable}`}
+      lang="vi"
+      suppressHydrationWarning
+    >
+      <body className="min-h-screen bg-slate-50 antialiased" suppressHydrationWarning>
+        {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'document.querySelectorAll("[bis_skin_checked]").forEach(function(node){node.removeAttribute("bis_skin_checked");});',
+          }}
+        />
+      </body>
     </html>
   );
 }

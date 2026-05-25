@@ -1,8 +1,17 @@
 import { LogIn } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { LoginForm } from "@/components/auth/login-form";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
+  const { callbackUrl } = await searchParams;
+  const googleEnabled = Boolean(
+    process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET,
+  );
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5 text-slate-950">
       <section className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
@@ -11,17 +20,13 @@ export default function LoginPage() {
         </div>
         <h1 className="text-2xl font-semibold">Đăng nhập mrtee.vn</h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          NextAuth đã sẵn sàng cho Credentials và Google. Form đăng nhập chi
-          tiết sẽ được nối với server action/API ở bước tiếp theo.
+          Dùng tài khoản seed để kiểm thử nhanh các vai trò ADMIN, MONITOR và
+          STUDENT.
         </p>
-        <div className="mt-6 grid gap-3">
-          <Button className="w-full" type="button">
-            Đăng nhập bằng Google
-          </Button>
-          <Button className="w-full" type="button" variant="outline">
-            Đăng nhập bằng email
-          </Button>
-        </div>
+        <LoginForm
+          callbackUrl={callbackUrl ?? "/dashboard"}
+          googleEnabled={googleEnabled}
+        />
       </section>
     </main>
   );

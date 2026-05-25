@@ -1,0 +1,2 @@
+email,fullName,nickname,dob,school,avatar,photoWithTeacher,customPhoto1,customPhoto2,coverImage,university,postGraduateWork,futureGoal,hobbies,yearbookMessage,role
+an.nguyen@example.com,Nguyen Minh An,An,2008-08-12,THPT MrTee,https://example.com/avatar.jpg,https://example.com/with-teacher.jpg,https://example.com/photo-1.jpg,https://example.com/photo-2.jpg,https://example.com/cover.jpg,Dai hoc Bach khoa,,"Khoa hoc may tinh, AI",Lap trinh web,Cam on thay va cac ban,Algorithm

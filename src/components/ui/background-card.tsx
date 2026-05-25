@@ -1,14 +1,19 @@
 import type * as React from "react";
 
+import { ImageLightboxButton } from "@/components/ui/image-lightbox";
 import { cn } from "@/lib/utils";
 
 type BackgroundCardProps = React.ComponentProps<"div"> & {
   backgroundImage?: string | null;
+  backgroundPosition?: string | null;
+  showImageAction?: boolean;
   overlayClassName?: string;
 };
 
 export function BackgroundCard({
   backgroundImage,
+  backgroundPosition,
+  showImageAction = false,
   overlayClassName,
   className,
   children,
@@ -24,7 +29,7 @@ export function BackgroundCard({
       )}
       style={{
         backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
-        backgroundPosition: "center",
+        backgroundPosition: backgroundPosition ?? "center",
         backgroundSize: "cover",
         ...style,
       }}
@@ -32,10 +37,17 @@ export function BackgroundCard({
     >
       <div
         className={cn(
-          "absolute inset-0 bg-slate-950/55 backdrop-blur-[1px]",
+          "absolute inset-0 bg-slate-950/38",
           overlayClassName,
         )}
       />
+      {showImageAction && backgroundImage ? (
+        <ImageLightboxButton
+          className="absolute right-3 top-3 z-20"
+          imageUrl={backgroundImage}
+          label="Xem ảnh"
+        />
+      ) : null}
       <div className="relative z-10">{children}</div>
     </div>
   );

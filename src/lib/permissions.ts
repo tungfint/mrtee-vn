@@ -31,6 +31,16 @@ export function canManageTeams(user?: SessionUser | null) {
   return user?.role === "ADMIN";
 }
 
+export function canEditTeam(
+  user: SessionUser | null | undefined,
+  targetTeam: { monitorId?: string | null },
+) {
+  return (
+    user?.role === "ADMIN" ||
+    (user?.role === "MONITOR" && targetTeam.monitorId === user.id)
+  );
+}
+
 export function canManageBlog(user?: SessionUser | null) {
   return user?.role === "ADMIN";
 }
