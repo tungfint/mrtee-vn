@@ -1,10 +1,47 @@
-import { BookImage, CalendarDays, GraduationCap } from "lucide-react";
+import { BookImage, CalendarDays, Camera, GraduationCap, MessagesSquare } from "lucide-react";
 import Link from "next/link";
 
+import { AlbumShowcase } from "@/components/content/album-showcase";
+import { MemoryPostCard } from "@/components/content/memory-post-card";
 import { HomeHeroCarousel } from "@/components/home/home-hero-carousel";
 import { HomeNavigation } from "@/components/home/home-navigation";
+import { prisma } from "@/lib/prisma";
 
-export default function HomePage() {
+async function loadHomeHighlights() {
+  try {
+    const [stories, album] = await Promise.all([
+      prisma.memoryPost.findMany({
+        include: { media: { orderBy: { sortOrder: "asc" } } },
+        orderBy: { updatedAt: "desc" },
+        take: 3,
+        where: { publishedAt: { not: null } },
+      }),
+      prisma.album.findFirst({
+        include: {
+          items: { orderBy: { sortOrder: "asc" } },
+          playlist: {
+            include: {
+              tracks: {
+                orderBy: { sortOrder: "asc" },
+                where: { enabled: true },
+              },
+            },
+          },
+        },
+        orderBy: { updatedAt: "desc" },
+        where: { published: true },
+      }),
+    ]);
+
+    return { album, stories };
+  } catch {
+    return { album: null, stories: [] };
+  }
+}
+
+export default async function HomePage() {
+  const { album, stories } = await loadHomeHighlights();
+
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <HomeHeroCarousel />
@@ -54,6 +91,52 @@ export default function HomePage() {
         </div>
         <HomeNavigation />
       </section>
+
+      {stories.length ? (
+        <section className="border-y border-slate-200 bg-white">
+          <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
+            <div className="mb-7 flex items-center gap-3">
+              <MessagesSquare aria-hidden className="h-6 w-6 text-cyan-700" />
+              <div>
+                <p className="text-sm font-medium uppercase text-emerald-700">Ghi chép mới</p>
+                <h2 className="text-2xl font-semibold text-slate-950">Những câu chuyện vừa được lưu lại</h2>
+              </div>
+            </div>
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {stories.map((post) => (
+                <MemoryPostCard key={post.id} label="Kỷ yếu số" post={post} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {album ? (
+        <section className="bg-slate-50">
+          <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
+            <div className="mb-7 flex items-center gap-3">
+              <Camera aria-hidden className="h-6 w-6 text-emerald-700" />
+              <div>
+                <p className="text-sm font-medium uppercase text-emerald-700">Album nổi bật</p>
+                <h2 className="text-2xl font-semibold text-slate-950">Ảnh và video từ những hành trình gần đây</h2>
+              </div>
+            </div>
+            <AlbumShowcase
+              albums={[
+                {
+                  ...album,
+                  items: album.items.map((item) => ({
+                    caption: item.caption ?? undefined,
+                    title: item.title ?? undefined,
+                    type: item.type,
+                    url: item.url,
+                  })),
+                },
+              ]}
+            />
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

@@ -1,4 +1,4 @@
-import { GraduationCap, Trophy } from "lucide-react";
+import { GraduationCap, Images, Music2, Trophy } from "lucide-react";
 import Link from "next/link";
 
 import { AdminShell } from "@/components/admin/admin-shell";
@@ -24,17 +24,35 @@ const cards = [
     icon: Trophy,
     key: "teams",
   },
+  {
+    href: "/dashboard/admin/albums",
+    label: "Album",
+    description:
+      "Theo dõi album của lớp và đội tuyển, mở nhanh nơi sửa slideshow, folder Drive và playlist.",
+    icon: Images,
+    key: "albums",
+  },
+  {
+    href: "/dashboard/admin/music",
+    label: "Nhạc nền",
+    description:
+      "Tạo playlist phát trên website, sắp bài và chọn danh sách mặc định cho người xem.",
+    icon: Music2,
+    key: "playlists",
+  },
 ];
 
 export default async function AdminPage() {
   await requireAdmin();
 
-  const [classes, teams] = await Promise.all([
+  const [classes, teams, albums, playlists] = await Promise.all([
     prisma.class.count(),
     prisma.team.count(),
+    prisma.album.count(),
+    prisma.musicPlaylist.count(),
   ]);
 
-  const counts = { classes, teams };
+  const counts = { albums, classes, playlists, teams };
 
   return (
     <AdminShell

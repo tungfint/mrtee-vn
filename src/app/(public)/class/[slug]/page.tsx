@@ -2,11 +2,13 @@ import { ArrowLeft, BookOpenText, Camera, ExternalLink, Sparkles } from "lucide-
 import Link from "next/link";
 
 import { MediaGallery, type GalleryMediaItem } from "@/components/content/media-gallery";
+import { AlbumShowcase } from "@/components/content/album-showcase";
 import { MediaStrip } from "@/components/content/media-strip";
 import { MemoryPostCard } from "@/components/content/memory-post-card";
 import { RichContent } from "@/components/content/rich-content";
 import { BackgroundCard } from "@/components/ui/background-card";
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
+import { displayImageUrl } from "@/lib/media-urls";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -99,6 +101,21 @@ async function loadClass(slug: string) {
   try {
     return await prisma.class.findUnique({
       include: {
+        albums: {
+          include: {
+            items: { orderBy: { sortOrder: "asc" } },
+            playlist: {
+              include: {
+                tracks: {
+                  orderBy: { sortOrder: "asc" },
+                  where: { enabled: true },
+                },
+              },
+            },
+          },
+          orderBy: { sortOrder: "asc" },
+          where: { published: true },
+        },
         memoryPosts: {
           include: { media: { orderBy: { sortOrder: "asc" } } },
           orderBy: { updatedAt: "desc" },
@@ -162,13 +179,13 @@ export default async function ClassPage({
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <section className="relative overflow-hidden bg-slate-950 text-white">
         <div
-          className="absolute inset-0 bg-cover opacity-45"
+          className="absolute inset-0 bg-cover"
           style={{
-            backgroundImage: `url(${classroom?.coverImage ?? fallbackHero})`,
+            backgroundImage: `url(${displayImageUrl(coverImage) ?? coverImage})`,
             backgroundPosition: classroom?.coverImageCrop ?? "center",
           }}
         />
-        <div className="absolute inset-0 bg-slate-950/50" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/38 to-transparent" />
         <ImageLightboxButton
           className="absolute right-5 top-5 z-20"
           imageUrl={coverImage}
@@ -182,7 +199,7 @@ export default async function ClassPage({
           <h1 className="mt-5 text-4xl font-semibold sm:text-6xl">
             {className}
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-100">
+          <p className="slogan-type mt-5 max-w-3xl text-3xl leading-snug text-slate-100 sm:text-4xl">
             {classroom?.slogan ??
               "Code có thể sai rồi sửa, nhưng thanh xuân thì phải lưu lại thật đẹp."}
           </p>
@@ -198,28 +215,50 @@ export default async function ClassPage({
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-white">
-        <article className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
-              <BookOpenText aria-hidden className="h-5 w-5" />
+      <section className="border-b border-slate-200 bg-slate-50">
+        <div className="feature-story-layout mx-auto grid max-w-7xl gap-6 px-5 py-10 sm:px-8 lg:px-10">
+          <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm ring-1 ring-cyan-100/70 sm:p-7">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-cyan-50 text-cyan-700">
+                <BookOpenText aria-hidden className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-medium uppercase text-emerald-700">
+                  Bài viết giới thiệu
+                </p>
+                <h2 className="text-2xl font-semibold">{introductionPost.title}</h2>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium uppercase text-emerald-700">
-                Bài viết giới thiệu
-              </p>
-              <h2 className="text-2xl font-semibold">{introductionPost.title}</h2>
+            <RichContent content={introductionPost.content} format={introductionPost.contentFormat} />
+            <MediaStrip items={mediaItems(introductionPost.media)} />
+            {classroom?.achievements ? (
+              <div className="mt-8 rounded-lg border border-emerald-100 bg-emerald-50/60 p-5">
+                <h3 className="text-xl font-semibold text-slate-950">Thành tích</h3>
+                <RichContent className="mt-3 text-slate-700" content={classroom.achievements} />
+              </div>
+            ) : null}
+          </article>
+
+          <aside className="feature-story-aside min-w-0 rounded-lg border border-cyan-100 bg-white/72 p-5 shadow-sm">
+            <div className="mb-5">
+              <p className="text-sm font-medium uppercase text-emerald-700">Lưu bút</p>
+              <h2 className="mt-2 text-2xl font-semibold text-slate-950">
+                Bài viết và chia sẻ
+              </h2>
             </div>
-          </div>
-          <RichContent content={introductionPost.content} format={introductionPost.contentFormat} />
-          <MediaStrip items={mediaItems(introductionPost.media)} />
-          {classroom?.achievements ? (
-            <div className="mt-8 rounded-lg border border-emerald-100 bg-emerald-50/60 p-5">
-              <h3 className="text-xl font-semibold text-slate-950">Thành tích</h3>
-              <RichContent className="mt-3 text-slate-700" content={classroom.achievements} />
+            <div className="feature-story-list grid gap-4">
+              {storyPosts.length ? (
+                storyPosts.slice(0, 4).map((post) => (
+                  <MemoryPostCard compact key={post.id} label="Lưu bút lớp" post={post} />
+                ))
+              ) : (
+                <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+                  Chưa có bài lưu bút được công khai.
+                </div>
+              )}
             </div>
-          ) : null}
-        </article>
+          </aside>
+        </div>
       </section>
 
       <section className="border-b border-slate-200 bg-slate-100">
@@ -241,7 +280,16 @@ export default async function ClassPage({
               </a>
             ) : null}
           </div>
-          <MediaGallery items={albumItems} title={`Album ${className}`} />
+          {classroom?.albums.length ? (
+            <AlbumShowcase
+              albums={classroom.albums.map((album) => ({
+                ...album,
+                items: mediaItems(album.items),
+              }))}
+            />
+          ) : (
+            <MediaGallery items={albumItems} title={`Album ${className}`} />
+          )}
         </div>
       </section>
 
@@ -260,7 +308,7 @@ export default async function ClassPage({
                 backgroundPosition={student.backgroundPosition}
                 className="min-h-80 p-5 shadow-xl shadow-slate-900/15"
                 key={student.id}
-                overlayClassName="bg-slate-950/18"
+                overlayClassName="bg-gradient-to-t from-slate-950/12 via-transparent to-transparent"
                 showImageAction
               >
                 <div className="flex min-h-64 flex-col justify-end">
@@ -282,27 +330,6 @@ export default async function ClassPage({
         </div>
       </section>
 
-      <section className="bg-slate-100">
-        <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
-          <div className="mb-6">
-            <p className="text-sm font-medium uppercase text-emerald-700">Lưu bút</p>
-            <h2 className="mt-2 text-3xl font-semibold text-slate-950">
-              Bài viết và chia sẻ
-            </h2>
-          </div>
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {storyPosts.length ? (
-              storyPosts.map((post) => (
-                <MemoryPostCard key={post.id} label="Lưu bút lớp" post={post} />
-              ))
-            ) : (
-              <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-                Chưa có bài lưu bút được công khai.
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
     </main>
   );
 }

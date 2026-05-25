@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import { TeamCategory } from "@prisma/client";
 
 import { MediaGallery, type GalleryMediaItem } from "@/components/content/media-gallery";
+import { AlbumShowcase } from "@/components/content/album-showcase";
 import { MemoryPostCard } from "@/components/content/memory-post-card";
 import { RichContent } from "@/components/content/rich-content";
 import { BackgroundCard } from "@/components/ui/background-card";
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
+import { displayImageUrl } from "@/lib/media-urls";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -85,6 +87,21 @@ export default async function TeamYearPage({
   const [team, availableYears] = await Promise.all([
     prisma.team.findUnique({
       include: {
+        albums: {
+          include: {
+            items: { orderBy: { sortOrder: "asc" } },
+            playlist: {
+              include: {
+                tracks: {
+                  orderBy: { sortOrder: "asc" },
+                  where: { enabled: true },
+                },
+              },
+            },
+          },
+          orderBy: { sortOrder: "asc" },
+          where: { published: true },
+        },
         members: {
           include: { studentProfile: true },
           orderBy: { createdAt: "asc" },
@@ -117,13 +134,13 @@ export default async function TeamYearPage({
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <section className="relative overflow-hidden bg-slate-950 text-white">
         <div
-          className="absolute inset-0 bg-cover opacity-48"
+          className="absolute inset-0 bg-cover"
           style={{
-            backgroundImage: `url(${heroImage})`,
+            backgroundImage: `url(${displayImageUrl(heroImage) ?? heroImage})`,
             backgroundPosition: team.backgroundImageCrop ?? team.coverImageCrop ?? "center",
           }}
         />
-        <div className="absolute inset-0 bg-slate-950/52" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/38 to-transparent" />
         <ImageLightboxButton
           className="absolute right-5 top-5 z-20"
           imageUrl={heroImage}
@@ -163,28 +180,51 @@ export default async function TeamYearPage({
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-white">
-        <article className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
-              <BookOpenText aria-hidden className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-medium uppercase text-emerald-700">Bài viết giới thiệu</p>
-              <h2 className="text-2xl font-semibold">{teamName} {team.year}</h2>
-            </div>
-          </div>
-          <RichContent content={team.introContent ?? team.description ?? ""} format={team.introFormat} />
-          {team.achievements ? (
-            <div className="mt-7 rounded-lg border border-emerald-100 bg-emerald-50/60 p-5">
-              <div className="mb-3 flex items-center gap-2 text-emerald-800">
-                <Trophy aria-hidden className="h-5 w-5" />
-                <h3 className="text-lg font-semibold">Thành tích</h3>
+      <section className="border-b border-slate-200 bg-slate-50">
+        <div className="feature-story-layout mx-auto grid max-w-7xl gap-6 px-5 py-10 sm:px-8 lg:px-10">
+          <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm ring-1 ring-cyan-100/70 sm:p-7">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-cyan-50 text-cyan-700">
+                <BookOpenText aria-hidden className="h-5 w-5" />
               </div>
-              <RichContent className="text-slate-700" content={team.achievements} />
+              <div>
+                <p className="text-sm font-medium uppercase text-emerald-700">Bài viết giới thiệu</p>
+                <h2 className="text-2xl font-semibold">{teamName} {team.year}</h2>
+              </div>
             </div>
-          ) : null}
-        </article>
+            <RichContent content={team.introContent ?? team.description ?? ""} format={team.introFormat} />
+            {team.achievements ? (
+              <div className="mt-7 rounded-lg border border-emerald-100 bg-emerald-50/60 p-5">
+                <div className="mb-3 flex items-center gap-2 text-emerald-800">
+                  <Trophy aria-hidden className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">Thành tích</h3>
+                </div>
+                <RichContent className="text-slate-700" content={team.achievements} />
+              </div>
+            ) : null}
+          </article>
+
+          <aside className="feature-story-aside min-w-0 rounded-lg border border-cyan-100 bg-white/72 p-5 shadow-sm">
+            <div className="mb-5 flex items-center gap-3">
+              <UsersRound aria-hidden className="h-6 w-6 text-emerald-700" />
+              <div>
+                <p className="text-sm font-medium uppercase text-emerald-700">Lưu bút</p>
+                <h2 className="text-2xl font-semibold">Bài viết và chia sẻ</h2>
+              </div>
+            </div>
+            <div className="feature-story-list grid gap-4">
+              {team.memoryPosts.length ? (
+                team.memoryPosts.slice(0, 4).map((post) => (
+                  <MemoryPostCard compact key={post.id} label={`${team.year} · Chia sẻ`} post={post} />
+                ))
+              ) : (
+                <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
+                  Chưa có bài viết được công khai trong năm này.
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
       </section>
 
       <section className="border-b border-slate-200 bg-slate-100">
@@ -193,7 +233,21 @@ export default async function TeamYearPage({
             <Camera aria-hidden className="h-6 w-6 text-emerald-700" />
             <h2 className="text-3xl font-semibold">Album đội tuyển</h2>
           </div>
-          <MediaGallery items={albumItems} title={`Album ${teamName} ${team.year}`} />
+          {team.albums.length ? (
+            <AlbumShowcase
+              albums={team.albums.map((album) => ({
+                ...album,
+                items: album.items.map((item) => ({
+                  caption: item.caption ?? undefined,
+                  title: item.title ?? undefined,
+                  type: item.type,
+                  url: item.url,
+                })),
+              }))}
+            />
+          ) : (
+            <MediaGallery items={albumItems} title={`Album ${teamName} ${team.year}`} />
+          )}
         </div>
       </section>
 
@@ -214,7 +268,7 @@ export default async function TeamYearPage({
                 }
                 className="min-h-80 p-5 shadow-xl shadow-slate-900/12"
                 key={member.id}
-                overlayClassName="bg-slate-950/14"
+                overlayClassName="bg-gradient-to-t from-slate-950/12 via-transparent to-transparent"
                 showImageAction
               >
                 <div className="flex min-h-64 flex-col justify-end">
@@ -239,28 +293,6 @@ export default async function TeamYearPage({
         </div>
       </section>
 
-      <section className="bg-slate-100">
-        <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
-          <div className="mb-6 flex items-center gap-3">
-            <UsersRound aria-hidden className="h-6 w-6 text-emerald-700" />
-            <div>
-              <p className="text-sm font-medium uppercase text-emerald-700">Lưu bút</p>
-              <h2 className="text-3xl font-semibold">Bài viết và chia sẻ</h2>
-            </div>
-          </div>
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {team.memoryPosts.length ? (
-              team.memoryPosts.map((post) => (
-                <MemoryPostCard key={post.id} label={`${team.year} · Chia sẻ`} post={post} />
-              ))
-            ) : (
-              <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-                Chưa có bài viết được công khai trong năm này.
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
     </main>
   );
 }

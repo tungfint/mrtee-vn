@@ -1,15 +1,21 @@
 import {
   GraduationCap,
+  Images,
   LayoutDashboard,
+  Music2,
   Trophy,
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+export { ActionFeedback } from "@/components/admin/action-feedback";
+
 const adminLinks = [
   { href: "/dashboard/admin", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/dashboard/admin/classes", label: "Lớp học", icon: GraduationCap },
   { href: "/dashboard/admin/teams", label: "Đội tuyển", icon: Trophy },
+  { href: "/dashboard/admin/albums", label: "Album", icon: Images },
+  { href: "/dashboard/admin/music", label: "Nhạc nền", icon: Music2 },
 ];
 
 export function AdminShell({
@@ -92,31 +98,6 @@ export function AdminPanel({
 
 export function FormGrid({ children }: { children: ReactNode }) {
   return <div className="grid gap-4 md:grid-cols-2">{children}</div>;
-}
-
-export function ActionFeedback({
-  message,
-  status,
-}: {
-  message?: string;
-  status?: string;
-}) {
-  if (!message || (status !== "success" && status !== "error")) {
-    return null;
-  }
-
-  return (
-    <div
-      className={
-        status === "success"
-          ? "fixed right-5 top-5 z-50 max-w-sm rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 shadow-lg"
-          : "fixed right-5 top-5 z-50 max-w-sm rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-900 shadow-lg"
-      }
-      role={status === "error" ? "alert" : "status"}
-    >
-      {message}
-    </div>
-  );
 }
 
 export function ImageStandards() {

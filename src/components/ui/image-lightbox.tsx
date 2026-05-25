@@ -5,6 +5,7 @@
 import { Expand, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { displayImageUrl } from "@/lib/media-urls";
 import { cn } from "@/lib/utils";
 
 export function ImageLightboxButton({
@@ -19,6 +20,7 @@ export function ImageLightboxButton({
   label?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const visibleImageUrl = displayImageUrl(imageUrl) ?? imageUrl;
 
   useEffect(() => {
     if (!open) {
@@ -76,7 +78,7 @@ export function ImageLightboxButton({
             alt={alt}
             className="max-h-[88vh] max-w-full rounded-md object-contain shadow-2xl"
             onClick={(event) => event.stopPropagation()}
-            src={imageUrl}
+            src={visibleImageUrl}
           />
         </div>
       ) : null}

@@ -91,7 +91,7 @@ function optionalUserId(formData: FormData, key: string) {
 }
 
 function feedbackUrl(path: string, status: "success" | "error", message: string) {
-  return `${path}?status=${status}&message=${encodeURIComponent(message)}`;
+  return `${path}?status=${status}&message=${encodeURIComponent(message)}&feedback=${Date.now()}`;
 }
 
 function actionFailed(path: string, message: string, error?: unknown): never {
@@ -106,6 +106,35 @@ function actionCompleted(path: string, message: string): never {
   revalidatePath(path);
   revalidatePath("/", "layout");
   redirect(feedbackUrl(path, "success", message));
+}
+
+function parsedTrackLines(formData: FormData) {
+  const value = optional(formData, "tracks") ?? "";
+
+  return value
+    .split("\n")
+    .map((line) => line.split("|").map((part) => part.trim()))
+    .filter((parts) => parts.length >= 2 && parts[0] && parts[1])
+    .map(([title, url, artist]) => ({
+      artist: artist || null,
+      title,
+      url,
+    }));
+}
+
+async function replacePlaylistTracks(playlistId: string, formData: FormData) {
+  const tracks = parsedTrackLines(formData);
+  await prisma.musicTrack.deleteMany({ where: { playlistId } });
+
+  if (tracks.length) {
+    await prisma.musicTrack.createMany({
+      data: tracks.map((track, sortOrder) => ({
+        ...track,
+        playlistId,
+        sortOrder,
+      })),
+    });
+  }
 }
 
 function normalizeCsvCell(value: string | undefined) {
@@ -819,4 +848,76 @@ export async function deleteMemoryPostAction(formData: FormData) {
 
   revalidatePath("/dashboard/admin/memories");
   revalidatePath("/", "layout");
+}
+
+export async function createPlaylistAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/music";
+
+  try {
+    const makeDefault = formData.get("isSiteDefault") === "on";
+
+    if (makeDefault) {
+      await prisma.musicPlaylist.updateMany({ data: { isSiteDefault: false } });
+    }
+
+    const playlist = await prisma.musicPlaylist.create({
+      data: {
+        description: optional(formData, "description"),
+        isSiteDefault: makeDefault,
+        name: required(formData, "name"),
+      },
+    });
+    await replacePlaylistTracks(playlist.id, formData);
+  } catch (error) {
+    actionFailed(path, "Không thể tạo playlist.", error);
+  }
+
+  actionCompleted(path, "Đã tạo playlist nhạc.");
+}
+
+export async function updatePlaylistAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/music";
+  const playlistId = required(formData, "playlistId");
+
+  try {
+    const makeDefault = formData.get("isSiteDefault") === "on";
+
+    if (makeDefault) {
+      await prisma.musicPlaylist.updateMany({
+        data: { isSiteDefault: false },
+        where: { NOT: { id: playlistId } },
+      });
+    }
+
+    await prisma.musicPlaylist.update({
+      data: {
+        description: optional(formData, "description"),
+        isSiteDefault: makeDefault,
+        name: required(formData, "name"),
+      },
+      where: { id: playlistId },
+    });
+    await replacePlaylistTracks(playlistId, formData);
+  } catch (error) {
+    actionFailed(path, "Không thể lưu playlist.", error);
+  }
+
+  actionCompleted(path, "Đã lưu playlist nhạc.");
+}
+
+export async function deletePlaylistAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/music";
+
+  try {
+    await prisma.musicPlaylist.delete({
+      where: { id: required(formData, "playlistId") },
+    });
+  } catch (error) {
+    actionFailed(path, "Không thể xóa playlist.", error);
+  }
+
+  actionCompleted(path, "Đã xóa playlist nhạc.");
 }

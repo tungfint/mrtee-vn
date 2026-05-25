@@ -36,7 +36,8 @@ export function MediaAssetsField({ items = [] }: { items?: MediaItem[] }) {
       </div>
       <p className="mb-3 text-xs leading-5 text-slate-500">
         Mỗi dòng: TYPE | URL | Tiêu đề | Chú thích. TYPE gồm IMAGE, VIDEO,
-        AUDIO, LINK hoặc FILE. VIDEO chấp nhận URL YouTube/Google Drive hoặc file MP4.
+        AUDIO, LINK hoặc FILE. Có thể dán trực tiếp link share Google Drive cho
+        IMAGE, VIDEO và AUDIO; VIDEO cũng chấp nhận YouTube hoặc file MP4.
       </p>
       <textarea
         className={textareaClass}

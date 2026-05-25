@@ -5,6 +5,7 @@ import { TeamCategory } from "@prisma/client";
 
 import { BackgroundCard } from "@/components/ui/background-card";
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
+import { displayImageUrl } from "@/lib/media-urls";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -55,10 +56,10 @@ export default async function TeamPage({
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <section className="relative overflow-hidden bg-slate-950 text-white">
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-48"
-          style={{ backgroundImage: `url(${heroImage})` }}
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${displayImageUrl(heroImage) ?? heroImage})` }}
         />
-        <div className="absolute inset-0 bg-slate-950/48" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/78 via-slate-950/36 to-transparent" />
         <ImageLightboxButton
           className="absolute right-5 top-5 z-20"
           imageUrl={heroImage}
@@ -133,7 +134,7 @@ export default async function TeamPage({
                 }
                 className="min-h-80 p-5"
                 key={team.id}
-                overlayClassName="bg-slate-950/26"
+                overlayClassName="bg-gradient-to-t from-slate-950/20 via-transparent to-transparent"
                 showImageAction
               >
                 <div className="flex min-h-72 flex-col justify-end">

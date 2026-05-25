@@ -13,6 +13,7 @@ import {
   selectClass,
   textareaClass,
 } from "@/components/admin/admin-shell";
+import { AlbumManager } from "@/components/admin/album-manager";
 import { EditorNavigation } from "@/components/admin/editor-navigation";
 import { ImageField } from "@/components/admin/image-field";
 import { MediaAssetsField } from "@/components/admin/media-assets-field";
@@ -24,10 +25,13 @@ import {
   importClassMembersAction,
 } from "../../../admin/actions";
 import {
+  createManagedClassAlbumAction,
   createManagedClassPostAction,
   createManagedClassStudentAction,
+  deleteManagedClassAlbumAction,
   deleteManagedClassPostAction,
   removeManagedClassStudentAction,
+  updateManagedClassAlbumAction,
   updateManagedClassAction,
   updateManagedClassPostAction,
   updateManagedClassStudentAction,
@@ -54,9 +58,13 @@ export default async function EditClassPage({
 
   const { id } = await params;
   const feedback = await searchParams;
-  const [classroom, monitorUsers] = await Promise.all([
+  const [classroom, monitorUsers, playlists] = await Promise.all([
     prisma.class.findFirst({
       include: {
+        albums: {
+          include: { items: { orderBy: { sortOrder: "asc" } } },
+          orderBy: { sortOrder: "asc" },
+        },
         memoryPosts: {
           include: { media: { orderBy: { sortOrder: "asc" } } },
           orderBy: { updatedAt: "desc" },
@@ -76,6 +84,10 @@ export default async function EditClassPage({
           select: { email: true, id: true, name: true, role: true },
         })
       : Promise.resolve([]),
+    prisma.musicPlaylist.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
   ]);
 
   if (!classroom || !canEditClass(session.user, classroom)) {
@@ -239,6 +251,7 @@ export default async function EditClassPage({
           <EditorNavigation
             items={[
               { href: "#class-information", label: "Thông tin lớp" },
+              { href: "#class-albums", label: "Album" },
               { href: "#class-import", label: "Phân công / Import" },
               { href: "#class-posts", label: "Bài viết" },
               { href: "#class-members", label: "Thành viên" },
@@ -345,6 +358,34 @@ export default async function EditClassPage({
           </div>
           <ImageStandards />
           </form>
+        </details>
+
+        <details
+          className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+          id="class-albums"
+          open
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 font-semibold text-slate-900 hover:bg-slate-50">
+            Album lớp học
+            <span className="text-xs font-medium text-slate-500">Thu gọn / Mở rộng</span>
+          </summary>
+          <section className="border-t border-slate-200 p-5">
+            <div className="mb-5">
+              <h2 className="text-xl font-semibold">Quản lý Album</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Album được hiển thị trên trang lớp, hỗ trợ slideshow ảnh/video, folder Drive và nhạc nền đã chọn.
+              </p>
+            </div>
+            <AlbumManager
+              albums={classroom.albums}
+              createAction={createManagedClassAlbumAction}
+              deleteAction={deleteManagedClassAlbumAction}
+              ownerId={classroom.id}
+              ownerKey="classId"
+              playlists={playlists}
+              updateAction={updateManagedClassAlbumAction}
+            />
+          </section>
         </details>
 
         {session.user.role === Role.ADMIN ? (

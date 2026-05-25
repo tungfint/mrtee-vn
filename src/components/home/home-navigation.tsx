@@ -15,7 +15,7 @@ import { BackgroundCard } from "@/components/ui/background-card";
 const links = [
   {
     title: "Tin2023",
-    description: "Kỷ niệm, hồ sơ học sinh và thành tích của lớp.",
+    description: "Không gian lưu giữ hành trình của chúng ta.",
     href: "/tin2023",
     icon: UsersRound,
     backgroundImage:
@@ -23,31 +23,31 @@ const links = [
   },
   {
     title: "Tin2326",
-    description: "Không gian lưu giữ hành trình cấp ba của lớp.",
+    description: "Kỷ niệm quý báu không thể nào quên.",
     href: "/tin2326",
     icon: GraduationCap,
     backgroundImage:
-      "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=900&q=80",
+      "https://drive.google.com/open?id=17wypm_VMME-9YY6QK4DwX4InLsM1vvOt&usp=drive_fs?auto=format&fit=crop&w=900&q=80",
   },
   {
-    title: "HSG Tin",
-    description: "Đội tuyển học sinh giỏi Tin học theo từng năm.",
+    title: "Đội tuyển HSG Tin",
+    description: "Những cao thủ trong làng Tin học và những thành tích đáng tự hào.",
     href: "/hsg-tin",
     icon: Trophy,
     backgroundImage:
       "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=900&q=80",
   },
   {
-    title: "FTC",
-    description: "Dự án, robot, hình ảnh và dấu mốc thi đấu.",
+    title: "Đội tuyển Robotics FTC",
+    description: "Chúng ta và em bot và những hành trình đáng nhớ!",
     href: "/ftc",
     icon: Trophy,
     backgroundImage:
       "https://images.unsplash.com/photo-1535378620166-273708d44e4c?auto=format&fit=crop&w=900&q=80",
   },
   {
-    title: "AI",
-    description: "Các hoạt động nghiên cứu, thử nghiệm và sản phẩm AI.",
+    title: "Đội tuyển AI",
+    description: "Chinh phục những thử thách mới.",
     href: "/ai",
     icon: BookOpenText,
     backgroundImage:
@@ -55,7 +55,7 @@ const links = [
   },
   {
     title: "Blog",
-    description: "Bài viết chia sẻ nghề giáo, công nghệ và học tập.",
+    description: "Những chia sẻ, những câu chuyện và những kỷ niệm của chúng ta.",
     href: "/blog",
     icon: Newspaper,
     backgroundImage:
@@ -83,17 +83,17 @@ export function HomeNavigation() {
               <BackgroundCard
                 backgroundImage={item.backgroundImage}
                 className="h-full min-h-56 p-5 shadow-xl shadow-slate-900/15 group-hover:shadow-emerald-900/20"
-                overlayClassName="bg-slate-950/58 group-hover:bg-slate-950/48"
+                overlayClassName="bg-gradient-to-t from-slate-950/20 via-transparent to-transparent"
               >
                 <div className="mb-12 flex h-10 w-10 items-center justify-center rounded-md bg-white/90 text-emerald-700 shadow-sm">
                   <Icon aria-hidden className="h-5 w-5" />
                 </div>
-                <h2 className="text-lg font-semibold text-white">
-                  {item.title}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-100">
-                  {item.description}
-                </p>
+                <div className="rounded-md bg-slate-950/66 p-4 text-white shadow-lg backdrop-blur-[2px]">
+                  <h2 className="text-lg font-semibold">{item.title}</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-100">
+                    {item.description}
+                  </p>
+                </div>
               </BackgroundCard>
             </Link>
           </motion.div>

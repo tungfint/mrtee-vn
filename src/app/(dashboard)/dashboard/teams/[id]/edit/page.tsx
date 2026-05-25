@@ -13,6 +13,7 @@ import {
   selectClass,
   textareaClass,
 } from "@/components/admin/admin-shell";
+import { AlbumManager } from "@/components/admin/album-manager";
 import { EditorNavigation } from "@/components/admin/editor-navigation";
 import { ImageField } from "@/components/admin/image-field";
 import { MediaAssetsField } from "@/components/admin/media-assets-field";
@@ -25,9 +26,12 @@ import {
 } from "../../../admin/actions";
 import {
   addManagedTeamMemberAction,
+  createManagedTeamAlbumAction,
   createManagedTeamPostAction,
+  deleteManagedTeamAlbumAction,
   deleteManagedTeamPostAction,
   removeManagedTeamMemberAction,
+  updateManagedTeamAlbumAction,
   updateManagedTeamAction,
   updateManagedTeamMemberAction,
   updateManagedTeamPostAction,
@@ -54,9 +58,13 @@ export default async function EditTeamPage({
 
   const { id } = await params;
   const feedback = await searchParams;
-  const [team, studentProfiles, classes, monitorUsers] = await Promise.all([
+  const [team, studentProfiles, classes, monitorUsers, playlists] = await Promise.all([
     prisma.team.findUnique({
       include: {
+        albums: {
+          include: { items: { orderBy: { sortOrder: "asc" } } },
+          orderBy: { sortOrder: "asc" },
+        },
         members: {
           include: {
             studentProfile: {
@@ -89,6 +97,10 @@ export default async function EditTeamPage({
           select: { email: true, id: true, name: true, role: true },
         })
       : Promise.resolve([]),
+    prisma.musicPlaylist.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
   ]);
 
   if (!team || !canEditTeam(session.user, team)) {
@@ -239,6 +251,7 @@ export default async function EditTeamPage({
           <EditorNavigation
             items={[
               { href: "#team-information", label: "Thông tin năm" },
+              { href: "#team-albums", label: "Album" },
               { href: "#team-import", label: "Phân công / Import" },
               { href: "#team-posts", label: "Bài viết" },
               { href: "#team-members", label: "Thành viên" },
@@ -307,7 +320,7 @@ export default async function EditTeamPage({
                 ))}
               </select>
             </Field>
-            <Field label="Thư viện ảnh">
+            <Field label="Thư viện ảnh cũ (hiển thị khi chưa tạo Album)">
               <textarea
                 className={textareaClass}
                 defaultValue={team.galleryImages.join("\n")}
@@ -370,6 +383,34 @@ export default async function EditTeamPage({
           </div>
           <ImageStandards />
           </form>
+        </details>
+
+        <details
+          className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+          id="team-albums"
+          open
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 font-semibold text-slate-900 hover:bg-slate-50">
+            Album đội tuyển năm {team.year}
+            <span className="text-xs font-medium text-slate-500">Thu gọn / Mở rộng</span>
+          </summary>
+          <section className="border-t border-slate-200 p-5">
+            <div className="mb-5">
+              <h2 className="text-xl font-semibold">Quản lý Album</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Album hiển thị ở trang năm đội tuyển, hỗ trợ slideshow, folder Drive và playlist nhạc đi kèm.
+              </p>
+            </div>
+            <AlbumManager
+              albums={team.albums}
+              createAction={createManagedTeamAlbumAction}
+              deleteAction={deleteManagedTeamAlbumAction}
+              ownerId={team.id}
+              ownerKey="teamId"
+              playlists={playlists}
+              updateAction={updateManagedTeamAlbumAction}
+            />
+          </section>
         </details>
 
         {session.user.role === Role.ADMIN ? (

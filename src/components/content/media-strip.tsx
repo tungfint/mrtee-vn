@@ -1,6 +1,8 @@
 import { ExternalLink, FileText, Headphones, ImageIcon, Video } from "lucide-react";
 
+import { EmbeddedVideo } from "@/components/content/embedded-video";
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
+import { displayImageUrl, drivePreviewUrl, embeddedVideoUrl } from "@/lib/media-urls";
 
 type MediaItem = {
   type: "IMAGE" | "VIDEO" | "AUDIO" | "LINK" | "FILE";
@@ -16,29 +18,6 @@ const mediaIcons = {
   LINK: ExternalLink,
   FILE: FileText,
 };
-
-function embeddedVideoUrl(url: string) {
-  try {
-    const parsed = new URL(url);
-
-    if (parsed.hostname.includes("youtu.be")) {
-      return `https://www.youtube.com/embed/${parsed.pathname.slice(1)}`;
-    }
-
-    if (parsed.hostname.includes("youtube.com")) {
-      const videoId = parsed.searchParams.get("v");
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
-    }
-
-    if (parsed.hostname.includes("drive.google.com")) {
-      return url.replace(/\/view.*$/, "/preview");
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-}
 
 export function MediaStrip({ items }: { items: MediaItem[] }) {
   if (!items.length) {
@@ -59,13 +38,7 @@ export function MediaStrip({ items }: { items: MediaItem[] }) {
               className="overflow-hidden rounded-lg border border-slate-200 bg-slate-950 shadow-sm"
             >
               {embedUrl ? (
-                <iframe
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="aspect-video w-full"
-                  src={embedUrl}
-                  title={item.title ?? "Video"}
-                />
+                <EmbeddedVideo src={embedUrl} title={item.title ?? "Video"} />
               ) : (
                 <video className="aspect-video w-full" controls src={item.url} />
               )}
@@ -79,6 +52,8 @@ export function MediaStrip({ items }: { items: MediaItem[] }) {
         }
 
         if (item.type === "AUDIO") {
+          const embedUrl = drivePreviewUrl(item.url);
+
           return (
             <div
               key={item.url}
@@ -88,17 +63,27 @@ export function MediaStrip({ items }: { items: MediaItem[] }) {
                 <Icon aria-hidden className="h-4 w-4 text-emerald-700" />
                 {item.title ?? "Audio"}
               </div>
-              <audio className="w-full" controls src={item.url} />
+              {embedUrl ? (
+                <iframe
+                  className="h-20 w-full rounded-md border-0"
+                  src={embedUrl}
+                  title={item.title ?? "Audio"}
+                />
+              ) : (
+                <audio className="w-full" controls src={item.url} />
+              )}
             </div>
           );
         }
 
         if (item.type === "IMAGE") {
+          const visibleImageUrl = displayImageUrl(item.url) ?? item.url;
+
           return (
             <div
               key={item.url}
               className="relative min-h-48 overflow-hidden rounded-lg border border-slate-200 bg-cover bg-center p-4 shadow-sm"
-              style={{ backgroundImage: `url(${item.url})` }}
+              style={{ backgroundImage: `url(${visibleImageUrl})` }}
             >
               <div className="absolute inset-0 bg-slate-950/10" />
               <div className="relative inline-flex rounded-md bg-white/92 px-3 py-2 text-sm font-medium text-slate-800 shadow-sm">

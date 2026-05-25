@@ -80,6 +80,7 @@ model Class {
   monitorId   String?      @unique
   monitor     User?        @relation("ClassMonitor", fields: [monitorId], references: [id], onDelete: SetNull)
   students    User[]       @relation("ClassStudents")
+  albums      Album[]
   memoryPosts MemoryPost[]
 
   createdAt DateTime @default(now())
@@ -139,6 +140,7 @@ model Team {
 
   monitorId   String?
   monitor     User?        @relation("TeamMonitor", fields: [monitorId], references: [id], onDelete: SetNull)
+  albums      Album[]
   members     TeamMember[]
   memoryPosts MemoryPost[]
 
@@ -268,6 +270,81 @@ model MediaAsset {
   updatedAt DateTime @updatedAt
 
   @@index([memoryPostId, sortOrder])
+}
+
+model Album {
+  id             String  @id @default(cuid())
+  title          String
+  description    String? @db.Text
+  imageFolderUrl String?
+  videoFolderUrl String?
+  published      Boolean @default(true)
+  sortOrder      Int     @default(0)
+
+  classId String?
+  class   Class?  @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  teamId String?
+  team   Team?   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  playlistId String?
+  playlist   MusicPlaylist? @relation(fields: [playlistId], references: [id], onDelete: SetNull)
+
+  items AlbumItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([classId, sortOrder])
+  @@index([teamId, sortOrder])
+  @@index([playlistId])
+}
+
+model AlbumItem {
+  id        String    @id @default(cuid())
+  type      MediaType
+  url       String
+  title     String?
+  caption   String?
+  sortOrder Int       @default(0)
+
+  albumId String
+  album   Album  @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([albumId, sortOrder])
+}
+
+model MusicPlaylist {
+  id            String @id @default(cuid())
+  name          String
+  description   String? @db.Text
+  isSiteDefault Boolean @default(false)
+
+  albums Album[]
+  tracks MusicTrack[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MusicTrack {
+  id        String  @id @default(cuid())
+  title     String
+  artist    String?
+  url       String
+  enabled   Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  playlistId String
+  playlist   MusicPlaylist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([playlistId, sortOrder])
 }
 
 model Account {

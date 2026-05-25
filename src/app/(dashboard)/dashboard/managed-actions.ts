@@ -103,8 +103,8 @@ function mediaTypeFromFile(file: File) {
   return MediaType.AUDIO;
 }
 
-function parsedMediaLines(formData: FormData) {
-  const value = optional(formData, "mediaLines") ?? "";
+function parsedMediaLines(formData: FormData, key = "mediaLines") {
+  const value = optional(formData, key) ?? "";
   const allowed = new Set(Object.values(MediaType));
 
   return value
@@ -150,8 +150,36 @@ async function replaceMediaAssets(memoryPostId: string, formData: FormData) {
   }
 }
 
+async function replaceAlbumItems(albumId: string, formData: FormData) {
+  const separatedItems = [
+    ...parsedMediaLines(formData, "albumImages"),
+    ...parsedMediaLines(formData, "albumVideos"),
+    ...parsedMediaLines(formData, "albumExtras"),
+  ];
+  const items = separatedItems.length
+    ? separatedItems
+    : parsedMediaLines(formData, "albumItems");
+
+  await prisma.albumItem.deleteMany({ where: { albumId } });
+
+  if (items.length) {
+    await prisma.albumItem.createMany({
+      data: items.map((item, sortOrder) => ({
+        ...item,
+        albumId,
+        sortOrder,
+      })),
+    });
+  }
+}
+
+function optionalPlaylistId(formData: FormData) {
+  const playlistId = optional(formData, "playlistId");
+  return playlistId === "none" ? null : playlistId;
+}
+
 function feedbackUrl(path: string, status: "success" | "error", message: string) {
-  return `${path}?status=${status}&message=${encodeURIComponent(message)}`;
+  return `${path}?status=${status}&message=${encodeURIComponent(message)}&feedback=${Date.now()}`;
 }
 
 function actionFailed(path: string, message: string, error?: unknown): never {
@@ -429,6 +457,80 @@ export async function deleteManagedClassPostAction(formData: FormData) {
   actionCompleted(path, "Đã xóa bài viết.");
 }
 
+export async function createManagedClassAlbumAction(formData: FormData) {
+  const classId = required(formData, "classId");
+  await requireClassEditor(classId);
+  const path = `/dashboard/classes/${classId}/edit`;
+
+  try {
+    const album = await prisma.album.create({
+      data: {
+        classId,
+        description: optional(formData, "description"),
+        imageFolderUrl: optional(formData, "imageFolderUrl"),
+        playlistId: optionalPlaylistId(formData),
+        published: formData.get("published") === "on",
+        sortOrder: Number(optional(formData, "sortOrder") ?? "0"),
+        title: required(formData, "title"),
+        videoFolderUrl: optional(formData, "videoFolderUrl"),
+      },
+    });
+    await replaceAlbumItems(album.id, formData);
+  } catch (error) {
+    actionFailed(path, "Không thể tạo album lớp.", error);
+  }
+
+  actionCompleted(path, "Đã tạo album lớp.");
+}
+
+export async function updateManagedClassAlbumAction(formData: FormData) {
+  const classId = required(formData, "classId");
+  await requireClassEditor(classId);
+  const path = `/dashboard/classes/${classId}/edit`;
+  const albumId = required(formData, "albumId");
+
+  try {
+    const result = await prisma.album.updateMany({
+      data: {
+        description: optional(formData, "description"),
+        imageFolderUrl: optional(formData, "imageFolderUrl"),
+        playlistId: optionalPlaylistId(formData),
+        published: formData.get("published") === "on",
+        sortOrder: Number(optional(formData, "sortOrder") ?? "0"),
+        title: required(formData, "title"),
+        videoFolderUrl: optional(formData, "videoFolderUrl"),
+      },
+      where: { classId, id: albumId },
+    });
+
+    if (!result.count) {
+      actionFailed(path, "Album này không còn thuộc lớp.");
+    }
+
+    await replaceAlbumItems(albumId, formData);
+  } catch (error) {
+    actionFailed(path, "Không thể lưu album lớp.", error);
+  }
+
+  actionCompleted(path, "Đã lưu album lớp.");
+}
+
+export async function deleteManagedClassAlbumAction(formData: FormData) {
+  const classId = required(formData, "classId");
+  await requireClassEditor(classId);
+  const path = `/dashboard/classes/${classId}/edit`;
+
+  try {
+    await prisma.album.deleteMany({
+      where: { classId, id: required(formData, "albumId") },
+    });
+  } catch (error) {
+    actionFailed(path, "Không thể xóa album lớp.", error);
+  }
+
+  actionCompleted(path, "Đã xóa album lớp.");
+}
+
 export async function removeManagedClassStudentAction(formData: FormData) {
   const classId = required(formData, "classId");
   await requireClassEditor(classId);
@@ -667,4 +769,78 @@ export async function deleteManagedTeamPostAction(formData: FormData) {
   }
 
   actionCompleted(path, "Đã xóa bài viết đội tuyển.");
+}
+
+export async function createManagedTeamAlbumAction(formData: FormData) {
+  const teamId = required(formData, "teamId");
+  await requireTeamEditor(teamId);
+  const path = `/dashboard/teams/${teamId}/edit`;
+
+  try {
+    const album = await prisma.album.create({
+      data: {
+        description: optional(formData, "description"),
+        imageFolderUrl: optional(formData, "imageFolderUrl"),
+        playlistId: optionalPlaylistId(formData),
+        published: formData.get("published") === "on",
+        sortOrder: Number(optional(formData, "sortOrder") ?? "0"),
+        teamId,
+        title: required(formData, "title"),
+        videoFolderUrl: optional(formData, "videoFolderUrl"),
+      },
+    });
+    await replaceAlbumItems(album.id, formData);
+  } catch (error) {
+    actionFailed(path, "Không thể tạo album đội tuyển.", error);
+  }
+
+  actionCompleted(path, "Đã tạo album đội tuyển.");
+}
+
+export async function updateManagedTeamAlbumAction(formData: FormData) {
+  const teamId = required(formData, "teamId");
+  await requireTeamEditor(teamId);
+  const path = `/dashboard/teams/${teamId}/edit`;
+  const albumId = required(formData, "albumId");
+
+  try {
+    const result = await prisma.album.updateMany({
+      data: {
+        description: optional(formData, "description"),
+        imageFolderUrl: optional(formData, "imageFolderUrl"),
+        playlistId: optionalPlaylistId(formData),
+        published: formData.get("published") === "on",
+        sortOrder: Number(optional(formData, "sortOrder") ?? "0"),
+        title: required(formData, "title"),
+        videoFolderUrl: optional(formData, "videoFolderUrl"),
+      },
+      where: { id: albumId, teamId },
+    });
+
+    if (!result.count) {
+      actionFailed(path, "Album này không còn thuộc đội tuyển.");
+    }
+
+    await replaceAlbumItems(albumId, formData);
+  } catch (error) {
+    actionFailed(path, "Không thể lưu album đội tuyển.", error);
+  }
+
+  actionCompleted(path, "Đã lưu album đội tuyển.");
+}
+
+export async function deleteManagedTeamAlbumAction(formData: FormData) {
+  const teamId = required(formData, "teamId");
+  await requireTeamEditor(teamId);
+  const path = `/dashboard/teams/${teamId}/edit`;
+
+  try {
+    await prisma.album.deleteMany({
+      where: { id: required(formData, "albumId"), teamId },
+    });
+  } catch (error) {
+    actionFailed(path, "Không thể xóa album đội tuyển.", error);
+  }
+
+  actionCompleted(path, "Đã xóa album đội tuyển.");
 }

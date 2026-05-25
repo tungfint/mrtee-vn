@@ -1,6 +1,7 @@
 import type * as React from "react";
 
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
+import { displayImageUrl } from "@/lib/media-urls";
 import { cn } from "@/lib/utils";
 
 type BackgroundCardProps = React.ComponentProps<"div"> & {
@@ -20,6 +21,8 @@ export function BackgroundCard({
   style,
   ...props
 }: BackgroundCardProps) {
+  const visibleBackgroundImage = displayImageUrl(backgroundImage);
+
   return (
     <div
       className={cn(
@@ -28,7 +31,9 @@ export function BackgroundCard({
         className,
       )}
       style={{
-        backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
+        backgroundImage: visibleBackgroundImage
+          ? `url(${visibleBackgroundImage})`
+          : undefined,
         backgroundPosition: backgroundPosition ?? "center",
         backgroundSize: "cover",
         ...style,
@@ -37,7 +42,7 @@ export function BackgroundCard({
     >
       <div
         className={cn(
-          "absolute inset-0 bg-slate-950/38",
+          "absolute inset-0 bg-transparent",
           overlayClassName,
         )}
       />

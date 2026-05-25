@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { MediaStrip } from "@/components/content/media-strip";
 import { RichContent } from "@/components/content/rich-content";
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
+import { displayImageUrl } from "@/lib/media-urls";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -56,8 +57,8 @@ export default async function MemoryPostPage({
         {heroImage ? (
           <>
             <div
-              className="absolute inset-0 bg-cover bg-center opacity-42"
-              style={{ backgroundImage: `url(${heroImage})` }}
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${displayImageUrl(heroImage) ?? heroImage})` }}
             />
             <ImageLightboxButton
               className="absolute right-5 top-5 z-20"
@@ -66,7 +67,7 @@ export default async function MemoryPostPage({
             />
           </>
         ) : null}
-        <div className="absolute inset-0 bg-slate-950/56" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/82 via-slate-950/44 to-transparent" />
         <div className="relative mx-auto max-w-4xl px-5 py-14 sm:px-8">
           <Link
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-100 hover:text-white"

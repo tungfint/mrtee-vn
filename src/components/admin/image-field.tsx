@@ -5,15 +5,40 @@ import { useMemo, useState } from "react";
 
 import { inputClass, selectClass } from "@/components/admin/admin-shell";
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
+import { displayImageUrl } from "@/lib/media-urls";
 import { cn } from "@/lib/utils";
 
 const cropOptions = [
-  { label: "Giữa ảnh", value: "center" },
-  { label: "Phía trên", value: "top" },
-  { label: "Phía dưới", value: "bottom" },
-  { label: "Bên trái", value: "left" },
-  { label: "Bên phải", value: "right" },
+  { label: "Giữa ảnh", value: "50% 50%" },
+  { label: "Phía trên", value: "50% 0%" },
+  { label: "Phía dưới", value: "50% 100%" },
+  { label: "Bên trái", value: "0% 50%" },
+  { label: "Bên phải", value: "100% 50%" },
 ];
+
+const legacyCrops: Record<string, string> = {
+  bottom: "50% 100%",
+  center: "50% 50%",
+  left: "0% 50%",
+  right: "100% 50%",
+  top: "50% 0%",
+};
+
+function cropCoordinates(value?: string | null) {
+  const normalized = legacyCrops[value ?? ""] ?? value ?? "50% 50%";
+  const match = normalized.match(/^(\d{1,3})%\s+(\d{1,3})%$/);
+
+  return match
+    ? {
+        x: Math.min(100, Number(match[1])),
+        y: Math.min(100, Number(match[2])),
+      }
+    : { x: 50, y: 50 };
+}
+
+function cropPercentage(value: string) {
+  return Math.min(100, Math.max(0, Number(value) || 0));
+}
 
 type ImageFieldProps = {
   name: string;
@@ -52,11 +77,19 @@ export function ImageField({
 }: ImageFieldProps) {
   const [preview, setPreview] = useState(defaultValue ?? "");
   const [localPreview, setLocalPreview] = useState("");
+  const initialCrop = cropCoordinates(defaultCrop);
+  const [cropX, setCropX] = useState(initialCrop.x);
+  const [cropY, setCropY] = useState(initialCrop.y);
 
   const activePreview = useMemo(
     () => localPreview || preview,
     [localPreview, preview],
   );
+  const visiblePreview = displayImageUrl(activePreview) ?? activePreview;
+  const cropValue = `${cropX}% ${cropY}%`;
+  const cropPreset = cropOptions.some((option) => option.value === cropValue)
+    ? cropValue
+    : "custom";
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
@@ -91,7 +124,7 @@ export function ImageField({
         </label>
       </div>
 
-      <div className="mt-3 grid gap-3 md:grid-cols-[1fr_180px]">
+      <div className="mt-3">
         <input
           className={inputClass}
           defaultValue={defaultValue ?? ""}
@@ -100,19 +133,6 @@ export function ImageField({
           onChange={(event) => setPreview(event.target.value)}
           placeholder="https://... hoặc Google Drive public link"
         />
-        {cropName ? (
-          <select
-            className={selectClass}
-            defaultValue={defaultCrop ?? "center"}
-            name={cropName}
-          >
-            {cropOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                Crop: {option.label}
-              </option>
-            ))}
-          </select>
-        ) : null}
       </div>
 
       <div
@@ -121,7 +141,8 @@ export function ImageField({
           previewAspectClass(recommendedSize),
         )}
         style={{
-          backgroundImage: activePreview ? `url(${activePreview})` : undefined,
+          backgroundImage: visiblePreview ? `url(${visiblePreview})` : undefined,
+          backgroundPosition: cropName ? cropValue : "center",
         }}
       >
         {activePreview ? (
@@ -134,6 +155,85 @@ export function ImageField({
           "Preview ảnh"
         )}
       </div>
+
+      {cropName ? (
+        <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+          <input name={cropName} type="hidden" value={cropValue} />
+          <div className="mb-3 grid gap-2 sm:grid-cols-[150px_1fr] sm:items-center">
+            <span className="text-xs font-semibold text-slate-600">Vị trí nhanh</span>
+            <select
+              className={selectClass}
+              onChange={(event) => {
+                if (event.target.value !== "custom") {
+                  const coordinates = cropCoordinates(event.target.value);
+                  setCropX(coordinates.x);
+                  setCropY(coordinates.y);
+                }
+              }}
+              value={cropPreset}
+            >
+              {cropOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+              <option value="custom">Tùy chỉnh</option>
+            </select>
+          </div>
+          <div className="mb-3">
+            <label className="flex items-center justify-between gap-3 text-xs font-medium text-slate-600">
+              <span>Ngang</span>
+              <span className="flex items-center gap-1">
+                <input
+                  aria-label="Vị trí crop ngang"
+                  className="w-16 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs text-slate-700"
+                  max="100"
+                  min="0"
+                  onChange={(event) => setCropX(cropPercentage(event.target.value))}
+                  type="number"
+                  value={cropX}
+                />
+                %
+              </span>
+            </label>
+            <input
+              aria-label="Kéo vị trí crop ngang"
+              className="mt-2 block w-full accent-emerald-700"
+              max="100"
+              min="0"
+              onChange={(event) => setCropX(cropPercentage(event.target.value))}
+              type="range"
+              value={cropX}
+            />
+          </div>
+          <div>
+            <label className="flex items-center justify-between gap-3 text-xs font-medium text-slate-600">
+              <span>Dọc</span>
+              <span className="flex items-center gap-1">
+                <input
+                  aria-label="Vị trí crop dọc"
+                  className="w-16 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs text-slate-700"
+                  max="100"
+                  min="0"
+                  onChange={(event) => setCropY(cropPercentage(event.target.value))}
+                  type="number"
+                  value={cropY}
+                />
+                %
+              </span>
+            </label>
+            <input
+              aria-label="Kéo vị trí crop dọc"
+              className="mt-2 block w-full accent-emerald-700"
+              max="100"
+              min="0"
+              onChange={(event) => setCropY(cropPercentage(event.target.value))}
+              type="range"
+              value={cropY}
+            />
+          </div>
+        </div>
+      ) : null}
 
       {localPreview ? (
         <p className="mt-2 text-xs leading-5 text-amber-700">

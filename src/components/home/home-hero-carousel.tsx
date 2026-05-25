@@ -1,27 +1,47 @@
 "use client";
 
-import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play, ShieldCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, Code2, Pause, Play } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
+import { displayImageUrl } from "@/lib/media-urls";
 
 const slides = [
   {
-    caption: "Tin2023 · Một thời áo trắng",
+    caption: "Tin2023 · Kỷ niệm cấp 3 là thứ càng trưởng thành càng thấy quý giá.",
     image:
-      "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1800&q=80",
+      "https://drive.google.com/open?id=1rnXV8ZvdHMOxiEunF_jEy4e9F_Z_WYDt&usp=drive_fs",
   },
   {
-    caption: "Đội tuyển Tin · Hành trình luyện tập",
+    caption: "Tin2326 · Điều đẹp nhất của tuổi trẻ là đã từng cùng nhau đi qua nó.",
     image:
-      "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1800&q=80",
+      "https://drive.google.com/open?id=17wypm_VMME-9YY6QK4DwX4InLsM1vvOt&usp=drive_fs",
   },
   {
-    caption: "STEM và công nghệ · Những dự án đầu tiên",
+    caption: "Đội tuyển Tin · Thanh xuân đôi khi chỉ là một phòng học đầy tiếng gõ bàn phím.",
     image:
-      "https://images.unsplash.com/photo-1535378620166-273708d44e4c?auto=format&fit=crop&w=1800&q=80",
+      "https://drive.google.com/open?id=1sQJrXZKqE9KmkEJ_gWCAyGf75VU6D--F&usp=drive_fs",
+  },
+  {
+    caption: "Đội tuyển Robotics FTC · Nơi từng có bảng trắng, máy tính và cả một bầu trời thanh xuân.",
+    image:
+      "https://drive.google.com/open?id=1Y8Zdj0kMM_QppxzTsH1N7UqZprZT-Rnb&usp=drive_fs",
+  },
+  {
+    caption: "Đội tuyển AI · Thanh xuân của dân Tin: deadline, contest và những đêm không ngủ.",
+    image:
+      "https://drive.google.com/open?id=1Uwn6Q24bxQNnWKU_xOLnwphqCzG2uXxr&usp=drive_fs",
+  },
+  {
+    caption: "Đội tuyển Robotics FTC · Robot có thể chạy bằng động cơ, còn chúng ta chạy bằng đam mê.",
+    image:
+      "https://drive.google.com/open?id=1A2Fcf4HAdmdzZXPd391xVF3R6nhm8BVz&usp=drive_fs",
+  },
+  {
+    caption: "Đội tuyển AI · Tuổi trẻ của chúng ta: code, robot, AI và những giấc mơ chưa giới hạn.",
+    image:
+      "https://drive.google.com/open?id=11XTbGqwgxzRd8J4NwfUEy6_FpRdxEfDK&usp=drive_fs",
   },
 ];
 
@@ -49,57 +69,70 @@ export function HomeHeroCarousel() {
           aria-hidden
           className={
             index === activeIndex
-              ? "absolute inset-0 bg-cover bg-center opacity-48 transition-opacity duration-700"
+              ? "absolute inset-0 bg-cover bg-center opacity-100 transition-opacity duration-700"
               : "absolute inset-0 bg-cover bg-center opacity-0 transition-opacity duration-700"
           }
           key={slide.image}
-          style={{ backgroundImage: `url(${slide.image})` }}
+          style={{ backgroundImage: `url(${displayImageUrl(slide.image) ?? slide.image})` }}
         />
       ))}
-      <div className="absolute inset-0 bg-slate-950/46" />
-      <ImageLightboxButton
-        className="absolute right-5 top-5 z-20"
-        imageUrl={active.image}
-        label="Xem ảnh banner"
-      />
-      <div className="relative mx-auto flex min-h-[76vh] max-w-7xl flex-col justify-between px-5 pb-10 pt-24 sm:px-8 lg:px-10">
-        <div className="max-w-3xl pt-10">
-          <p className="mb-4 inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-2 text-sm font-medium text-emerald-100 ring-1 ring-white/15">
-            <ShieldCheck aria-hidden className="h-4 w-4" />
-            If you never try, you'll never know!
-          </p>
-          <h1 className="text-4xl font-semibold leading-tight sm:text-6xl">MrTee</h1>
-          <p className="mt-5 max-w-2xl text-base leading-8 text-slate-100 sm:text-lg">
-            Nơi lưu giữ kỷ niệm của các lớp học và các thế hệ học sinh của thầy Tùng.
-            <br />
-            Những câu chuyện trưởng thành sẽ tiếp tục được viết từ đây, và còn mãi về sau...
-          </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button asChild>
-              <Link href="/tin2023">
-                Xem lớp học
-                <ArrowRight aria-hidden className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link href="/hsg-tin">Đội tuyển Tin</Link>
-            </Button>
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/86 via-slate-950/35 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-slate-950/72 to-transparent" />
+      <div className="relative mx-auto flex min-h-[min(84vh,820px)] max-w-7xl flex-col px-5 sm:px-8 lg:px-10">
+        <header className="flex items-center justify-between border-b border-white/16 py-5">
+          <div className="flex min-w-0 items-center gap-2.5 text-white sm:gap-5">
+            <Link className="font-code shrink-0 text-sm font-semibold text-white sm:text-lg" href="/">
+              mrtee.vn
+            </Link>
+            <span aria-hidden className="h-5 w-px shrink-0 bg-white/25" />
+            <p className="slogan-type flex min-w-0 items-center gap-1.5 whitespace-nowrap text-base text-cyan-50 sm:gap-2 sm:text-2xl">
+              <Code2 aria-hidden className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+              If you never try, you&apos;ll never know!
+            </p>
+          </div>
+          <nav className="hidden items-center gap-7 text-sm text-slate-100 lg:flex">
+            <Link className="hover:text-emerald-200" href="/tin2023">Tin2023</Link>
+            <Link className="hover:text-emerald-200" href="/tin2326">Tin2326</Link>
+            <Link className="hover:text-emerald-200" href="/hsg-tin">Đội tuyển</Link>
+            <Link className="hover:text-emerald-200" href="/blog">Blog</Link>
+          </nav>
+        </header>
+
+        <div className="flex flex-1 items-end py-12 sm:py-14">
+          <div className="max-w-3xl">
+            <h1 className="text-4xl font-semibold leading-tight text-white sm:text-6xl">
+              mrtee.vn
+            </h1>
+            <div className="mt-6 max-w-2xl border-l-2 border-cyan-200/80 pl-5 text-slate-50 sm:mt-8 sm:pl-6">
+              <p className="text-lg leading-8 sm:text-xl sm:leading-9">
+                Nơi lưu giữ kỷ niệm của các lớp học và các thế hệ học sinh của thầy Tùng.
+              </p>
+              <p className="mt-2 text-sm leading-7 text-cyan-50/90 sm:text-base">
+                Những câu chuyện trưởng thành tiếp tục được viết bằng tri thức, sáng tạo và tình bạn.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/18 pt-5">
-          <p className="text-sm font-medium text-white">{active.caption}</p>
+        <footer className="flex flex-wrap items-center justify-between gap-5 border-t border-white/20 py-6">
+          <div className="flex min-w-0 items-center gap-4">
+            <span className="font-code text-sm text-cyan-100">
+              {String(activeIndex + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+            </span>
+            <p className="max-w-xl text-sm font-medium text-white">{active.caption}</p>
+          </div>
           <div className="flex items-center gap-2">
+            <ImageLightboxButton imageUrl={active.image} label="Xem ảnh banner" />
             <button
               aria-label="Ảnh trước"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-white/10 ring-1 ring-white/25 hover:bg-white/20"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-slate-950/34 ring-1 ring-white/28 hover:bg-white/18"
               onClick={() => setActiveIndex((activeIndex - 1 + slides.length) % slides.length)}
               type="button"
             >
               <ChevronLeft aria-hidden className="h-4 w-4" />
             </button>
             <button
-              className="inline-flex h-9 items-center gap-2 rounded-md bg-white/10 px-3 text-xs font-medium ring-1 ring-white/25 hover:bg-white/20"
+              className="inline-flex h-9 items-center gap-2 rounded-md bg-slate-950/34 px-3 text-xs font-medium ring-1 ring-white/28 hover:bg-white/18"
               onClick={() => setAutoPlay((value) => !value)}
               type="button"
             >
@@ -108,14 +141,14 @@ export function HomeHeroCarousel() {
             </button>
             <button
               aria-label="Ảnh tiếp theo"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-white/10 ring-1 ring-white/25 hover:bg-white/20"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-slate-950/34 ring-1 ring-white/28 hover:bg-white/18"
               onClick={() => setActiveIndex((activeIndex + 1) % slides.length)}
               type="button"
             >
               <ChevronRight aria-hidden className="h-4 w-4" />
             </button>
           </div>
-        </div>
+        </footer>
       </div>
     </section>
   );

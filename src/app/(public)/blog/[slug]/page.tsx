@@ -1,5 +1,9 @@
 import { MediaStrip } from "@/components/content/media-strip";
 import { RichContent } from "@/components/content/rich-content";
+import { displayImageUrl } from "@/lib/media-urls";
+
+const demoHeroImage =
+  "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80";
 
 const demoMarkdown = `
 ## Bài viết mẫu
@@ -22,13 +26,12 @@ export default async function BlogPostPage({
     <main className="min-h-screen bg-white text-slate-950">
       <section className="relative overflow-hidden bg-slate-950 px-5 py-20 text-white sm:px-8 lg:px-10">
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-40"
+          className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage:
-              "url('https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1800&q=80')",
+            backgroundImage: `url(${displayImageUrl(demoHeroImage) ?? demoHeroImage})`,
           }}
         />
-        <div className="absolute inset-0 bg-slate-950/55" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/82 via-slate-950/46 to-transparent" />
         <div className="relative mx-auto max-w-3xl">
           <p className="text-sm font-medium uppercase text-emerald-100">
             /blog/{slug}

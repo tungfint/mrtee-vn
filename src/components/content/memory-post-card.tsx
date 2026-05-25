@@ -28,9 +28,11 @@ function excerptFor(post: MemoryPostPreview) {
 }
 
 export function MemoryPostCard({
+  compact = false,
   label = "Bài viết",
   post,
 }: {
+  compact?: boolean;
   label?: string;
   post: MemoryPostPreview;
 }) {
@@ -40,12 +42,12 @@ export function MemoryPostCard({
     <BackgroundCard
       backgroundImage={image}
       backgroundPosition={post.coverImageCrop ?? post.backgroundImageCrop ?? "center"}
-      className="min-h-72 p-5"
-      overlayClassName={image ? "bg-slate-950/34" : "bg-white"}
+      className={compact ? "min-h-56 p-4" : "min-h-72 p-5"}
+      overlayClassName={image ? "bg-gradient-to-t from-slate-950/26 via-transparent to-transparent" : "bg-white"}
       showImageAction={Boolean(image)}
     >
-      <div className="flex min-h-60 flex-col justify-end">
-        <div className={image ? "rounded-md bg-slate-950/64 p-4 text-white" : "text-slate-950"}>
+      <div className={compact ? "flex min-h-48 flex-col justify-end" : "flex min-h-60 flex-col justify-end"}>
+        <div className={image ? "rounded-md bg-slate-950/68 p-4 text-white shadow-lg backdrop-blur-[2px]" : "text-slate-950"}>
           <p className={image ? "text-xs font-semibold uppercase text-emerald-100" : "text-xs font-semibold uppercase text-emerald-700"}>
             {label}
           </p>
