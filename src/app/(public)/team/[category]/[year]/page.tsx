@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { CollectionPage, type CollectionMember, type CollectionStory } from "@/components/content/collection-page";
 import type { GalleryMediaItem } from "@/components/content/media-gallery";
+import { stringArrayFromJson } from "@/lib/json-fields";
 import { prisma } from "@/lib/prisma";
 import { collectVideoItems, toGalleryItems, uniqueMediaItems } from "@/lib/public-media";
 
@@ -116,12 +117,12 @@ function fallbackTeamStories(teamName: string, year: number): CollectionStory[] 
 
 function galleryItems(
   team: {
-    galleryImages: string[];
+    galleryImages: unknown;
     memoryPosts: { media: Parameters<typeof toGalleryItems>[0] }[];
   },
   fallbackImage: string,
 ) {
-  const items: GalleryMediaItem[] = team.galleryImages.map((url, index) => ({
+  const items: GalleryMediaItem[] = stringArrayFromJson(team.galleryImages).map((url, index) => ({
     title: `Khoảnh khắc ${index + 1}`,
     type: "IMAGE",
     url,
@@ -178,6 +179,12 @@ export default async function TeamYearPage({
           orderBy: { updatedAt: "desc" },
           where: { publishedAt: { not: null } },
         },
+        studentPages: {
+          select: {
+            studentProfileId: true,
+            studentSlug: true,
+          },
+        },
       },
       where: { category_year: { category: teamCategory, year: yearNumber } },
     }),
@@ -205,6 +212,10 @@ export default async function TeamYearPage({
     name: member.studentProfile.fullName,
     nickname: member.studentProfile.nickname,
     role: member.role,
+    href:
+      team.studentPages.find((page) => page.studentProfileId === member.studentProfile.id)
+        ? `/${category}/${team.year}/${team.studentPages.find((page) => page.studentProfileId === member.studentProfile.id)?.studentSlug}`
+        : `/student/${member.studentProfile.id}`,
   }));
   const members = [...realMembers, ...fallbackTeamMembers].slice(0, Math.max(4, realMembers.length));
 

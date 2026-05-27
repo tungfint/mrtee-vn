@@ -1,4 +1,11 @@
-import { GraduationCap, Images, Music2, Trophy } from "lucide-react";
+import {
+  GraduationCap,
+  House,
+  Images,
+  Music2,
+  Trophy,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 
 import { AdminShell } from "@/components/admin/admin-shell";
@@ -9,12 +16,28 @@ export const dynamic = "force-dynamic";
 
 const cards = [
   {
+    href: "/dashboard/admin/home",
+    label: "Trang chủ",
+    description:
+      "Quản lý nhanh bài viết nổi bật, album hình ảnh và album video đang xuất hiện ở ngoài trang chủ.",
+    icon: House,
+    key: "home",
+  },
+  {
     href: "/dashboard/admin/classes",
     label: "Lớp học",
     description:
       "Quản lý theo từng lớp: thông tin lớp, ảnh, thành viên, import CSV/Excel và bài viết trong lớp.",
     icon: GraduationCap,
     key: "classes",
+  },
+  {
+    href: "/dashboard/admin/students",
+    label: "Học sinh",
+    description:
+      "Tạo link thông tin, link bài viết, đổi token và xuất danh sách link để gửi riêng cho học sinh.",
+    icon: UsersRound,
+    key: "students",
   },
   {
     href: "/dashboard/admin/teams",
@@ -45,18 +68,24 @@ const cards = [
 export default async function AdminPage() {
   await requireAdmin();
 
-  const [classes, teams, albums, playlists] = await Promise.all([
+  const [classes, students, teams, albums, playlists, home] = await Promise.all([
     prisma.class.count(),
+    prisma.studentPage.count(),
     prisma.team.count(),
     prisma.album.count(),
     prisma.musicPlaylist.count(),
+    Promise.all([
+      prisma.post.count({ where: { showOnHome: true } }),
+      prisma.memoryPost.count({ where: { showOnHome: true } }),
+      prisma.album.count({ where: { showOnHome: true } }),
+    ]).then(([posts, memories, homeAlbums]) => posts + memories + homeAlbums),
   ]);
 
-  const counts = { albums, classes, playlists, teams };
+  const counts = { albums, classes, home, playlists, students, teams };
 
   return (
     <AdminShell
-      description="Khu vực dành riêng cho ADMIN. Mọi nội dung được tổ chức quanh hai mảng chính: lớp học và đội tuyển."
+      description="Khu vực dành riêng cho ADMIN. Mọi nội dung được tổ chức quanh trang chủ, lớp học, học sinh, đội tuyển, album và nhạc nền."
       title="Quản trị nội dung"
     >
       <div className="grid gap-4 md:grid-cols-2">

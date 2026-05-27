@@ -22,6 +22,8 @@ const fallbackAvatar =
 
 const fallbackStudent = {
   avatar: fallbackAvatar,
+  cityCountry: "",
+  company: "",
   coverImage: fallbackAvatar,
   customPhoto1:
     "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
@@ -36,6 +38,8 @@ const fallbackStudent = {
     "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=900&q=80",
   postGraduateWork: "",
   university: "Đại học Bách khoa",
+  workField: "",
+  yearbookFormat: "MARKDOWN" as const,
   yearbookMessage:
     "Em nhớ nhất là những buổi cả nhóm ở lại sửa project đến khi trời tối.",
 };
@@ -123,6 +127,8 @@ export default async function StudentProfilePage({
         customPhoto2: profile.customPhoto2 ?? fallbackStudent.customPhoto2,
         dob: formatDate(profile.dob),
         fullName: profile.fullName,
+        cityCountry: profile.cityCountry ?? "",
+        company: profile.company ?? "",
         futureGoal: profile.futureGoal ?? "",
         hobbies: profile.hobbies ?? "",
         nickname: profile.nickname ?? "",
@@ -130,6 +136,8 @@ export default async function StudentProfilePage({
           profile.photoWithTeacher ?? fallbackStudent.photoWithTeacher,
         postGraduateWork: profile.postGraduateWork ?? "",
         university: profile.university ?? "",
+        workField: profile.workField ?? "",
+        yearbookFormat: profile.yearbookFormat,
         yearbookMessage: profile.yearbookMessage ?? "",
       }
     : fallbackStudent;
@@ -271,6 +279,42 @@ export default async function StudentProfilePage({
                   </div>
                 </div>
               ) : null}
+              {student.cityCountry ? (
+                <div className="flex gap-3">
+                  <BriefcaseBusiness
+                    aria-hidden
+                    className="mt-0.5 h-4 w-4 text-emerald-700"
+                  />
+                  <div>
+                    <dt className="text-slate-500">Thành phố - Quốc gia</dt>
+                    <dd className="font-medium">{student.cityCountry}</dd>
+                  </div>
+                </div>
+              ) : null}
+              {student.workField ? (
+                <div className="flex gap-3">
+                  <BriefcaseBusiness
+                    aria-hidden
+                    className="mt-0.5 h-4 w-4 text-emerald-700"
+                  />
+                  <div>
+                    <dt className="text-slate-500">Lĩnh vực đang làm</dt>
+                    <dd className="font-medium">{student.workField}</dd>
+                  </div>
+                </div>
+              ) : null}
+              {student.company ? (
+                <div className="flex gap-3">
+                  <BriefcaseBusiness
+                    aria-hidden
+                    className="mt-0.5 h-4 w-4 text-emerald-700"
+                  />
+                  <div>
+                    <dt className="text-slate-500">Công ty đang làm</dt>
+                    <dd className="font-medium">{student.company}</dd>
+                  </div>
+                </div>
+              ) : null}
               {student.futureGoal ? (
                 <div className="flex gap-3">
                   <GraduationCap
@@ -301,6 +345,7 @@ export default async function StudentProfilePage({
                 <RichContent
                   className="mt-4"
                   content={student.yearbookMessage}
+                  format={student.yearbookFormat}
                 />
               </article>
             ) : null}

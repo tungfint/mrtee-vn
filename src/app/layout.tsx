@@ -32,6 +32,8 @@ export const metadata: Metadata = {
     "Kỷ yếu số, portfolio giáo dục và blog công nghệ của thầy Tee.",
 };
 
+export const dynamic = "force-dynamic";
+
 async function defaultPlaylist() {
   try {
     return await prisma.musicPlaylist.findFirst({

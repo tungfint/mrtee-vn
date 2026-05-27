@@ -147,6 +147,12 @@ async function loadClass(slug: string) {
           include: { profile: true },
           orderBy: { name: "asc" },
         },
+        studentPages: {
+          select: {
+            studentProfileId: true,
+            studentSlug: true,
+          },
+        },
       },
       where: { slug },
     });
@@ -186,6 +192,12 @@ export default async function ClassPage({
         id: student.profile?.id ?? student.id,
         name: student.profile?.fullName ?? student.name ?? student.email,
         nickname: student.profile?.nickname ?? "",
+        href:
+          student.profile
+            ? classroom.studentPages.find((page) => page.studentProfileId === student.profile?.id)
+              ? `/${classroom.slug}/${classroom.studentPages.find((page) => page.studentProfileId === student.profile?.id)?.studentSlug}`
+              : `/student/${student.profile.id}`
+            : `/student/${student.id}`,
       }))
     : [];
   const members = [...realStudents, ...fallbackStudents].slice(0, Math.max(4, realStudents.length));

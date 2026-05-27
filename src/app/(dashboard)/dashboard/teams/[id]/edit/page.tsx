@@ -18,6 +18,7 @@ import { EditorNavigation } from "@/components/admin/editor-navigation";
 import { ImageField } from "@/components/admin/image-field";
 import { MediaAssetsField } from "@/components/admin/media-assets-field";
 import { authOptions } from "@/lib/auth";
+import { stringArrayFromJson } from "@/lib/json-fields";
 import { canEditTeam } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import {
@@ -335,7 +336,7 @@ export default async function EditTeamPage({
             <Field label="Thư viện ảnh cũ (hiển thị khi chưa tạo Album)">
               <textarea
                 className={textareaClass}
-                defaultValue={team.galleryImages.join("\n")}
+                defaultValue={stringArrayFromJson(team.galleryImages).join("\n")}
                 name="galleryImages"
                 placeholder="Mỗi dòng một URL ảnh hoặc link Google Drive"
               />

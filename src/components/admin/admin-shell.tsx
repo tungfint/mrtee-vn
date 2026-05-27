@@ -1,9 +1,12 @@
 import {
   GraduationCap,
+  House,
   Images,
   LayoutDashboard,
   Music2,
+  Newspaper,
   Trophy,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -12,9 +15,13 @@ export { ActionFeedback } from "@/components/admin/action-feedback";
 
 const adminLinks = [
   { href: "/dashboard/admin", label: "Tổng quan", icon: LayoutDashboard },
+  { href: "/dashboard/admin/home", label: "Trang chủ", icon: House },
   { href: "/dashboard/admin/classes", label: "Lớp học", icon: GraduationCap },
+  { href: "/dashboard/admin/students", label: "Học sinh", icon: UsersRound },
   { href: "/dashboard/admin/teams", label: "Đội tuyển", icon: Trophy },
   { href: "/dashboard/admin/albums", label: "Album", icon: Images },
+  { href: "/dashboard/admin/posts", label: "Blog", icon: Newspaper },
+  { href: "/dashboard/admin/memories", label: "Bài viết kỷ niệm", icon: Newspaper },
   { href: "/dashboard/admin/music", label: "Nhạc nền", icon: Music2 },
 ];
 

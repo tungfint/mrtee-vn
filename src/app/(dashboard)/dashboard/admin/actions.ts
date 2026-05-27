@@ -1,17 +1,22 @@
 "use server";
 
 import {
+  AlbumViewMode,
   ContentFormat,
   MemoryPostType,
   Role,
+  StudentPageScope,
   TeamCategory,
 } from "@prisma/client";
 import { hash } from "bcryptjs";
+import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/admin-auth";
+import { homeSectionSettingKeys } from "@/lib/home-section-settings";
 import { prisma } from "@/lib/prisma";
+import { slugifyVietnamese, studentEmailFromSlug } from "@/lib/slugs";
 import { uploadPublicImage } from "@/lib/uploads";
 
 function required(formData: FormData, key: string) {
@@ -51,6 +56,50 @@ function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function studentPageToken() {
+  return randomBytes(24).toString("base64url");
+}
+
+function parseStudentImportLines(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [namePart, slugPart] = line.split("|").map((part) => part.trim());
+      return {
+        fullName: namePart,
+        slug: slugPart ? slugifyVietnamese(slugPart) : slugifyVietnamese(namePart),
+      };
+    })
+    .filter((item) => item.fullName && item.slug);
+}
+
+async function uniqueStudentSlug({
+  baseSlug,
+  classId,
+  teamId,
+}: {
+  baseSlug: string;
+  classId?: string | null;
+  teamId?: string | null;
+}) {
+  let candidate = baseSlug;
+  let suffix = 1;
+
+  while (
+    await prisma.studentPage.findFirst({
+      select: { id: true },
+      where: classId ? { classId, studentSlug: candidate } : { teamId, studentSlug: candidate },
+    })
+  ) {
+    suffix += 1;
+    candidate = `${baseSlug}${suffix}`;
+  }
+
+  return candidate;
 }
 
 function defaultSlug(value: string) {
@@ -505,6 +554,133 @@ export async function upsertStudentYearRecordAction(formData: FormData) {
   revalidatePath("/dashboard/admin/students");
 }
 
+export async function importStudentPagesAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/students";
+  const context = required(formData, "studentPageContext");
+  const students = parseStudentImportLines(required(formData, "studentPageNames"));
+
+  if (!students.length) {
+    actionFailed(path, "Danh sách học sinh chưa hợp lệ. Mỗi dòng cần có tên học sinh.");
+  }
+
+  const [scope, id] = context.split(":");
+  let classId: string | null = null;
+  let teamId: string | null = null;
+  let contextSlug = "";
+
+  if (scope === StudentPageScope.CLASS) {
+    const classroom = await prisma.class.findUnique({
+      select: { id: true, slug: true },
+      where: { id },
+    });
+
+    if (!classroom) {
+      actionFailed(path, "Không tìm thấy lớp học đã chọn.");
+    }
+
+    classId = classroom.id;
+    contextSlug = classroom.slug;
+  } else if (scope === StudentPageScope.TEAM) {
+    const team = await prisma.team.findUnique({
+      select: { category: true, id: true, year: true },
+      where: { id },
+    });
+
+    if (!team) {
+      actionFailed(path, "Không tìm thấy đội tuyển đã chọn.");
+    }
+
+    teamId = team.id;
+    contextSlug = `${team.category.toLowerCase().replace("_", "-")}-${team.year}`;
+  } else {
+    actionFailed(path, "Ngữ cảnh import không hợp lệ.");
+  }
+
+  let importedCount = 0;
+  const passwordHash = await hash("Mrtee@2026", 12);
+
+  for (const student of students) {
+    const studentSlug = await uniqueStudentSlug({
+      baseSlug: student.slug,
+      classId,
+      teamId,
+    });
+    const email = studentEmailFromSlug(contextSlug, studentSlug);
+
+    const user = await prisma.user.upsert({
+      create: {
+        classId,
+        email,
+        name: student.fullName,
+        passwordHash,
+        role: Role.STUDENT,
+      },
+      update: {
+        classId: classId ?? undefined,
+        name: student.fullName,
+      },
+      where: { email },
+    });
+
+    const profile = await prisma.studentProfile.upsert({
+      create: {
+        fullName: student.fullName,
+        userId: user.id,
+      },
+      update: {
+        fullName: student.fullName,
+      },
+      where: { userId: user.id },
+    });
+
+    if (teamId) {
+      await prisma.teamMember.upsert({
+        create: {
+          studentProfileId: profile.id,
+          teamId,
+        },
+        update: {},
+        where: {
+          teamId_studentProfileId: {
+            studentProfileId: profile.id,
+            teamId,
+          },
+        },
+      });
+    }
+
+    await prisma.studentPage.create({
+      data: {
+        classId,
+        fullNameSnapshot: student.fullName,
+        inputToken: studentPageToken(),
+        scope: scope as StudentPageScope,
+        studentProfileId: profile.id,
+        studentSlug,
+        teamId,
+      },
+    });
+
+    importedCount += 1;
+  }
+
+  revalidatePath(path);
+  revalidatePath("/", "layout");
+  actionCompleted(path, `Đã tạo ${importedCount} trang học sinh và link nhập liệu.`);
+}
+
+export async function regenerateStudentPageTokenAction(formData: FormData) {
+  await requireAdmin();
+
+  await prisma.studentPage.update({
+    data: { inputToken: studentPageToken() },
+    where: { id: required(formData, "studentPageId") },
+  });
+
+  actionCompleted("/dashboard/admin/students", "Đã tạo link mới cho học sinh.");
+}
+
 export async function importClassMembersAction(formData: FormData) {
   await requireAdmin();
 
@@ -901,6 +1077,89 @@ export async function deleteMemoryPostAction(formData: FormData) {
 
   revalidatePath("/dashboard/admin/memories");
   revalidatePath("/", "layout");
+}
+
+export async function updateHomePostVisibilityAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/home";
+  const id = required(formData, "id");
+  const type = required(formData, "type");
+  const showOnHome = formData.get("showOnHome") === "on";
+
+  try {
+    if (type === "post") {
+      await prisma.post.update({
+        data: { showOnHome },
+        where: { id },
+      });
+    } else if (type === "memory") {
+      await prisma.memoryPost.update({
+        data: { showOnHome },
+        where: { id },
+      });
+    } else {
+      actionFailed(path, "Loại bài viết không hợp lệ.");
+    }
+  } catch (error) {
+    actionFailed(path, "Không thể cập nhật bài viết ngoài trang chủ.", error);
+  }
+
+  actionCompleted(path, "Đã cập nhật bài viết ngoài trang chủ.");
+}
+
+export async function updateHomeAlbumVisibilityAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/home";
+
+  try {
+    await prisma.album.update({
+      data: {
+        published: formData.get("published") === "on",
+        showOnHome: formData.get("showOnHome") === "on",
+        viewMode: (optional(formData, "viewMode") ?? AlbumViewMode.GRID) as AlbumViewMode,
+      },
+      where: { id: required(formData, "id") },
+    });
+  } catch (error) {
+    actionFailed(path, "Không thể cập nhật album ngoài trang chủ.", error);
+  }
+
+  actionCompleted(path, "Đã cập nhật album ngoài trang chủ.");
+}
+
+export async function updateHomeSectionVisibilityAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/home";
+  const updates = [
+    {
+      key: homeSectionSettingKeys.allPosts,
+      value: formData.get("allPosts") === "on" ? "true" : "false",
+    },
+    {
+      key: homeSectionSettingKeys.allImages,
+      value: formData.get("allImages") === "on" ? "true" : "false",
+    },
+    {
+      key: homeSectionSettingKeys.allVideos,
+      value: formData.get("allVideos") === "on" ? "true" : "false",
+    },
+  ];
+
+  try {
+    await prisma.$transaction(
+      updates.map((item) =>
+        prisma.siteSetting.upsert({
+          create: item,
+          update: { value: item.value },
+          where: { key: item.key },
+        }),
+      ),
+    );
+  } catch (error) {
+    actionFailed(path, "Không thể lưu cấu hình hiển thị trang chủ.", error);
+  }
+
+  actionCompleted(path, "Đã lưu cấu hình hiển thị trang chủ.");
 }
 
 export async function createPlaylistAction(formData: FormData) {

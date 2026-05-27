@@ -24,6 +24,8 @@
 .DS_Store
 *.pem
 .codex-artifacts/
+.mariadb-data/
+.mariadb.*.log
 
 # debug
 npm-debug.log*

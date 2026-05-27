@@ -2,6 +2,8 @@ import { randomUUID } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 
+const localUploadsEnabled = process.env.LOCAL_UPLOADS_ENABLED !== "false";
+
 const imageExtensions: Record<string, string> = {
   "image/gif": "gif",
   "image/jpeg": "jpg",
@@ -31,6 +33,12 @@ function extensionFor(file: File) {
 }
 
 async function storePublicFile(file: File) {
+  if (!localUploadsEnabled) {
+    throw new Error(
+      "Local upload đang tắt để tiết kiệm dung lượng server. Hãy dán URL Google Drive, Cloudinary hoặc CDN thay vì upload file.",
+    );
+  }
+
   const uploadsDir = path.join(process.cwd(), "public", "uploads");
   await mkdir(uploadsDir, { recursive: true });
 

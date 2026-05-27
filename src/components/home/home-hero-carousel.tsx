@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Pause, Play, Quote } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -9,7 +9,7 @@ import { displayImageUrl } from "@/lib/media-urls";
 
 const introLines = [
   "Nơi lưu giữ kỷ niệm của các lớp học và các thế hệ học sinh của thầy Tùng.",
-  "Những câu chuyện trưởng thành sẽ tiếp tục được viết nên từ đây, và mãi về sau.",
+  "Những câu chuyện trưởng thành sẽ tiếp tục được viết từ đây, và mãi về sau.",
 ];
 
 const slides = [
@@ -106,15 +106,16 @@ export function HomeHeroCarousel() {
           </nav>
         </header>
 
-        <div className="flex flex-1 items-end py-8 sm:py-10">
-          <div className="w-full max-w-3xl">
-            <div className="border-l-2 border-emerald-300/90 bg-slate-950/28 px-4 py-3 shadow-xl shadow-slate-950/20 backdrop-blur-[2px] sm:px-5">
-              <div className="grid gap-1 font-code text-sm font-medium leading-7 text-white sm:text-base sm:leading-8">
+        <div className="flex flex-1 items-end pt-16 pb-6 sm:pt-20 sm:pb-8">
+          <div className="w-fit max-w-3xl">
+            <div className="rounded-r-xl border-l-2 border-emerald-300/90 bg-slate-950/[0.48] px-4 py-3 shadow-lg shadow-slate-950/20 backdrop-blur-[2px] sm:px-5 sm:py-3.5">
+              <div className="grid gap-0.5 font-code text-sm font-medium leading-6 text-white sm:text-[15px] sm:leading-6 md:text-base md:leading-7">
                 {introLines.map((line) => (
-                  <p key={line}>{line}</p>
+                  <p key={line} className="md:whitespace-nowrap">
+                    {line}
+                  </p>
                 ))}
               </div>
-              <Quote aria-hidden className="mt-2 h-4 w-4 text-emerald-200" />
             </div>
           </div>
         </div>

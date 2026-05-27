@@ -1,4 +1,4 @@
-import { Film, ImageIcon, Music2 } from "lucide-react";
+import { Film, HardDrive, ImageIcon, Music2 } from "lucide-react";
 
 import { textareaClass } from "@/components/admin/admin-shell";
 
@@ -36,14 +36,16 @@ export function MediaAssetsField({ items = [] }: { items?: MediaItem[] }) {
       </div>
       <p className="mb-3 text-xs leading-5 text-slate-500">
         Mỗi dòng: TYPE | URL | Tiêu đề | Chú thích. TYPE gồm IMAGE, VIDEO,
-        AUDIO, LINK hoặc FILE. Có thể dán trực tiếp link share Google Drive cho
-        IMAGE, VIDEO và AUDIO; VIDEO cũng chấp nhận YouTube hoặc file MP4.
+        AUDIO, LINK hoặc FILE. Dán trực tiếp link Google Drive, YouTube,
+        Cloudinary hoặc CDN để server chỉ lưu URL.
       </p>
       <textarea
         className={textareaClass}
         defaultValue={mediaText(items)}
         name="mediaLines"
-        placeholder={"IMAGE | https://... | Ảnh tập thể | Buổi tổng kết\nVIDEO | https://youtu.be/... | Clip kỷ niệm |\nAUDIO | https://...mp3 | Nhạc nền album |"}
+        placeholder={
+          "IMAGE | https://drive.google.com/file/d/... | Ảnh tập thể | Buổi tổng kết\nVIDEO | https://youtu.be/... | Clip kỷ niệm |\nAUDIO | https://drive.google.com/file/d/... | Nhạc nền album |"
+        }
       />
       <label className="mt-3 block text-sm font-medium text-slate-700">
         Upload thêm ảnh, video hoặc audio
@@ -55,8 +57,15 @@ export function MediaAssetsField({ items = [] }: { items?: MediaItem[] }) {
           type="file"
         />
       </label>
-      <p className="mt-2 text-xs text-slate-500">
-        Ảnh tối đa 8MB; video hoặc audio tối đa 20MB mỗi file.
+      <p className="mt-2 text-xs text-amber-700">
+        Nên ưu tiên Google Drive/Cloudinary/CDN cho album lớn. Upload local sẽ
+        lưu file vào hosting; ảnh tối đa 8MB, video/audio tối đa 20MB mỗi file.
+      </p>
+      <p className="mt-3 flex items-start gap-2 rounded-md border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs leading-5 text-emerald-900">
+        <HardDrive aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+        Nên lưu ảnh, video và audio trên Google Drive/Cloudinary/CDN rồi dán URL
+        vào ô trên. Database chỉ lưu URL và metadata; file thật không được tải
+        về database. Nếu upload local, database cũng chỉ lưu đường dẫn file.
       </p>
     </div>
   );

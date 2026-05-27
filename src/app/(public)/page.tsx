@@ -1,16 +1,19 @@
+import { MediaType, TeamCategory } from "@prisma/client";
 import { BookImage, CalendarDays, Camera, GraduationCap } from "lucide-react";
 import Link from "next/link";
-import { MediaType, TeamCategory } from "@prisma/client";
 
 import { AlbumShowcase } from "@/components/content/album-showcase";
 import { HomeHeroCarousel } from "@/components/home/home-hero-carousel";
 import { HomeNavigation } from "@/components/home/home-navigation";
 import { HomePostsCarousel, type HomePostItem } from "@/components/home/home-posts-carousel";
+import { getHomeSectionVisibility } from "@/lib/home-section-settings";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 async function loadHomeHighlights() {
   try {
-    const [stories, blogPosts, album, allAlbums, allMediaPosts, classes, teams] = await Promise.all([
+    const [stories, blogPosts, album, allAlbums, allMediaPosts, classes, teams, sectionVisibility] = await Promise.all([
       prisma.memoryPost.findMany({
         include: { media: { orderBy: { sortOrder: "asc" } } },
         orderBy: { updatedAt: "desc" },
@@ -84,11 +87,21 @@ async function loadHomeHighlights() {
           year: true,
         },
       }),
+      getHomeSectionVisibility(),
     ]);
 
-    return { album, allAlbums, allMediaPosts, blogPosts, classes, stories, teams };
+    return { album, allAlbums, allMediaPosts, blogPosts, classes, sectionVisibility, stories, teams };
   } catch {
-    return { album: null, allAlbums: [], allMediaPosts: [], blogPosts: [], classes: [], stories: [], teams: [] };
+    return {
+      album: null,
+      allAlbums: [],
+      allMediaPosts: [],
+      blogPosts: [],
+      classes: [],
+      sectionVisibility: { allImages: true, allPosts: true, allVideos: true },
+      stories: [],
+      teams: [],
+    };
   }
 }
 
@@ -104,7 +117,7 @@ function teamTitle(category: TeamCategory) {
   return "Đội tuyển AI";
 }
 
-function uniqueMediaItems<T extends { url: string }>(items: T[]) {
+function uniqueByUrl<T extends { url: string }>(items: T[]) {
   const seen = new Set<string>();
 
   return items.filter((item) => {
@@ -120,7 +133,7 @@ function uniqueMediaItems<T extends { url: string }>(items: T[]) {
 }
 
 export default async function HomePage() {
-  const { album, allAlbums, allMediaPosts, blogPosts, classes, stories, teams } = await loadHomeHighlights();
+  const { album, allAlbums, allMediaPosts, blogPosts, classes, sectionVisibility, stories, teams } = await loadHomeHighlights();
   const teamItems = Array.from(
     new Map(teams.map((team) => [team.category, team])).values(),
   );
@@ -200,7 +213,7 @@ export default async function HomePage() {
       title: post.title,
     })),
   ].filter((post) => !post.href.endsWith("/null"));
-  const allImageItems = uniqueMediaItems([
+  const imageItems = uniqueByUrl([
     ...allAlbums.flatMap((item) => item.items).filter((item) => item.type === MediaType.IMAGE),
     ...allMediaPosts.flatMap((post) => post.media).filter((item) => item.type === MediaType.IMAGE),
   ]).map((item) => ({
@@ -209,7 +222,7 @@ export default async function HomePage() {
     type: "IMAGE" as const,
     url: item.url,
   }));
-  const allVideoItems = uniqueMediaItems([
+  const videoItems = uniqueByUrl([
     ...allAlbums.flatMap((item) => item.items).filter((item) => item.type === MediaType.VIDEO),
     ...allMediaPosts.flatMap((post) => post.media).filter((item) => item.type === MediaType.VIDEO),
   ]).map((item) => ({
@@ -218,6 +231,18 @@ export default async function HomePage() {
     type: "VIDEO" as const,
     url: item.url,
   }));
+  const imageFolderUrls = uniqueByUrl(
+    allAlbums
+      .filter((item) => item.imageFolderUrl)
+      .map((item) => ({ title: item.title, url: item.imageFolderUrl ?? "" })),
+  );
+  const videoFolderUrls = uniqueByUrl(
+    allAlbums
+      .filter((item) => item.videoFolderUrl)
+      .map((item) => ({ title: item.title, url: item.videoFolderUrl ?? "" })),
+  );
+  const showFeaturedAlbum =
+    Boolean(album) && !sectionVisibility.allImages && !sectionVisibility.allVideos;
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -269,7 +294,7 @@ export default async function HomePage() {
         <HomeNavigation items={navigationItems} />
       </section>
 
-      {featuredPosts.length ? (
+      {!sectionVisibility.allPosts && featuredPosts.length ? (
         <section className="border-y border-slate-200 bg-white">
           <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
             <HomePostsCarousel posts={featuredPosts} title="Bài viết nổi bật" />
@@ -277,7 +302,7 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      {allPosts.length ? (
+      {sectionVisibility.allPosts && allPosts.length ? (
         <section className="border-b border-slate-200 bg-slate-50">
           <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
             <HomePostsCarousel posts={allPosts} title="Tất cả bài viết" />
@@ -285,7 +310,7 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      {album ? (
+      {showFeaturedAlbum && album ? (
         <section className="bg-slate-50">
           <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
             <div className="mb-7 flex items-center gap-3">
@@ -312,7 +337,7 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      {allImageItems.length ? (
+      {sectionVisibility.allImages && (imageItems.length || imageFolderUrls.length) ? (
         <section className="bg-white">
           <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
             <div className="mb-7 flex items-center gap-3">
@@ -325,13 +350,13 @@ export default async function HomePage() {
             <AlbumShowcase
               albums={[
                 {
-                  description: "Tự động gom ảnh từ các album public và media trong bài viết.",
                   constrainGridHeight: true,
+                  description: "Tự động gom toàn bộ ảnh từ các album public và media trong bài viết đã xuất bản.",
                   id: "all-home-images",
-                  imageFolderUrl: null,
-                  items: allImageItems,
+                  imageFolderUrls,
+                  items: imageItems,
                   playlist: null,
-                  title: "Tất cả ảnh",
+                  title: "Tất cả hình ảnh",
                   videoFolderUrl: null,
                   viewMode: "GRID",
                 },
@@ -341,7 +366,7 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      {allVideoItems.length ? (
+      {sectionVisibility.allVideos && (videoItems.length || videoFolderUrls.length) ? (
         <section className="border-t border-slate-200 bg-slate-50">
           <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
             <div className="mb-7 flex items-center gap-3">
@@ -354,13 +379,13 @@ export default async function HomePage() {
             <AlbumShowcase
               albums={[
                 {
-                  description: "Tự động gom video từ các album public và media trong bài viết.",
+                  description: "Tự động gom toàn bộ video từ các album public và media trong bài viết đã xuất bản.",
                   id: "all-home-videos",
                   imageFolderUrl: null,
-                  items: allVideoItems,
+                  items: videoItems,
                   playlist: null,
                   title: "Tất cả video",
-                  videoFolderUrl: null,
+                  videoFolderUrls,
                   viewMode: "GRID",
                 },
               ]}

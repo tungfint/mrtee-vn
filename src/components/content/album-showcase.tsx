@@ -9,22 +9,50 @@ import { driveFolderEmbedUrl } from "@/lib/media-urls";
 
 type AlbumViewMode = "SLIDE" | "GRID";
 
+type FolderLink = {
+  title?: string;
+  url: string;
+};
+
 export type PublicAlbum = {
   description?: string | null;
   constrainGridHeight?: boolean;
   id: string;
   imageFolderUrl?: string | null;
+  imageFolderUrls?: FolderLink[];
   items: GalleryMediaItem[];
   playlist?: AudioPlaylist | null;
   title: string;
   videoFolderUrl?: string | null;
+  videoFolderUrls?: FolderLink[];
   viewMode?: AlbumViewMode;
 };
 
+function normalizedFolders(
+  singleUrl: string | null | undefined,
+  urls: FolderLink[] | undefined,
+  fallbackTitle: string,
+) {
+  return [
+    ...(singleUrl ? [{ title: fallbackTitle, url: singleUrl }] : []),
+    ...(urls ?? []).map((folder) => ({
+      title: folder.title ?? fallbackTitle,
+      url: folder.url,
+    })),
+  ]
+    .map((folder) => ({
+      title: folder.title,
+      url: driveFolderEmbedUrl(folder.url),
+    }))
+    .filter((folder): folder is { title: string; url: string } => Boolean(folder.url));
+}
+
 function AlbumCard({ album }: { album: PublicAlbum }) {
   const [viewMode, setViewMode] = useState<AlbumViewMode>(album.viewMode ?? "SLIDE");
-  const imageFolder = driveFolderEmbedUrl(album.imageFolderUrl);
-  const videoFolder = driveFolderEmbedUrl(album.videoFolderUrl);
+  const folders = [
+    ...normalizedFolders(album.imageFolderUrl, album.imageFolderUrls, "Folder ảnh"),
+    ...normalizedFolders(album.videoFolderUrl, album.videoFolderUrls, "Folder video"),
+  ];
 
   return (
     <article className="grid gap-5">
@@ -86,26 +114,17 @@ function AlbumCard({ album }: { album: PublicAlbum }) {
           viewMode={viewMode}
         />
       ) : null}
-      {imageFolder || videoFolder ? (
+      {folders.length ? (
         <div className="grid gap-4 lg:grid-cols-2">
-          {imageFolder ? (
-            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          {folders.map((folder) => (
+            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white" key={folder.url}>
               <p className="flex items-center gap-2 border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-800">
                 <FolderOpen aria-hidden className="h-4 w-4 text-emerald-700" />
-                Folder ảnh
+                {folder.title}
               </p>
-              <iframe className="h-80 w-full border-0" src={imageFolder} title={`${album.title} - Folder ảnh`} />
+              <iframe className="h-80 w-full border-0" src={folder.url} title={`${album.title} - ${folder.title}`} />
             </div>
-          ) : null}
-          {videoFolder ? (
-            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-              <p className="flex items-center gap-2 border-b border-slate-100 px-4 py-3 text-sm font-semibold text-slate-800">
-                <FolderOpen aria-hidden className="h-4 w-4 text-emerald-700" />
-                Folder video
-              </p>
-              <iframe className="h-80 w-full border-0" src={videoFolder} title={`${album.title} - Folder video`} />
-            </div>
-          ) : null}
+          ))}
         </div>
       ) : null}
     </article>

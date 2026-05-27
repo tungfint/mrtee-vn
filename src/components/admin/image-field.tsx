@@ -8,6 +8,8 @@ import { ImageLightboxButton } from "@/components/ui/image-lightbox";
 import { displayImageUrl } from "@/lib/media-urls";
 import { cn } from "@/lib/utils";
 
+const localUploadsEnabled = process.env.NEXT_PUBLIC_LOCAL_UPLOADS_ENABLED !== "false";
+
 const cropOptions = [
   { label: "Giữa ảnh", value: "50% 50%" },
   { label: "Phía trên", value: "50% 0%" },
@@ -40,6 +42,13 @@ function cropPercentage(value: string) {
   return Math.min(100, Math.max(0, Number(value) || 0));
 }
 
+function previewAspectClass(recommendedSize: string) {
+  if (recommendedSize.includes("800 x 800")) return "aspect-square";
+  if (recommendedSize.includes("1920 x 720")) return "aspect-[8/3]";
+  if (recommendedSize.includes("1200 x 900")) return "aspect-[4/3]";
+  return "aspect-[16/9]";
+}
+
 type ImageFieldProps = {
   name: string;
   label: string;
@@ -49,22 +58,6 @@ type ImageFieldProps = {
   defaultValue?: string | null;
   helpText?: string;
 };
-
-function previewAspectClass(recommendedSize: string) {
-  if (recommendedSize.includes("800 x 800")) {
-    return "aspect-square";
-  }
-
-  if (recommendedSize.includes("1920 x 720")) {
-    return "aspect-[8/3]";
-  }
-
-  if (recommendedSize.includes("1200 x 900")) {
-    return "aspect-[4/3]";
-  }
-
-  return "aspect-[16/9]";
-}
 
 export function ImageField({
   name,
@@ -99,29 +92,29 @@ export function ImageField({
             {label}
           </label>
           <p className="mt-1 text-xs leading-5 text-slate-500">
-            Kích thước gợi ý: {recommendedSize}. Có thể dán URL ảnh hoặc link
-            Google Drive đã bật chia sẻ công khai.
+            Kích thước gợi ý: {recommendedSize}. Nên dán URL ảnh Google
+            Drive/Cloudinary/CDN đã public để tiết kiệm dung lượng hosting.
           </p>
           {helpText ? (
             <p className="mt-1 text-xs leading-5 text-slate-500">{helpText}</p>
           ) : null}
         </div>
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
-          <ImagePlus aria-hidden className="h-4 w-4 text-emerald-700" />
-          Up ảnh
-          <input
-            accept="image/*"
-            className="sr-only"
-            name={`${name}File`}
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) {
-                setLocalPreview(URL.createObjectURL(file));
-              }
-            }}
-            type="file"
-          />
-        </label>
+        {localUploadsEnabled ? (
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+            <ImagePlus aria-hidden className="h-4 w-4 text-emerald-700" />
+            Upload ảnh
+            <input
+              accept="image/*"
+              className="sr-only"
+              name={`${name}File`}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) setLocalPreview(URL.createObjectURL(file));
+              }}
+              type="file"
+            />
+          </label>
+        ) : null}
       </div>
 
       <div className="mt-3">
@@ -235,10 +228,17 @@ export function ImageField({
         </div>
       ) : null}
 
+      {!localUploadsEnabled ? (
+        <p className="mt-2 text-xs leading-5 text-emerald-800">
+          Upload local đang tắt. Form này chỉ lưu URL ảnh vào database, không
+          tải file về server.
+        </p>
+      ) : null}
+
       {localPreview ? (
         <p className="mt-2 text-xs leading-5 text-amber-700">
-          Ảnh này sẽ được upload vào thư mục public/uploads khi bấm lưu. Khi đưa
-          website lên production, có thể đổi sang Cloudinary hoặc Vercel Blob.
+          Ảnh này sẽ được lưu vào public/uploads khi bấm lưu. Chỉ bật lựa chọn
+          này khi server còn đủ dung lượng hoặc đã gắn storage ngoài.
         </p>
       ) : null}
     </div>

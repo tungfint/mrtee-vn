@@ -1,0 +1,5 @@
+ALTER TABLE `studentprofile`
+  ADD COLUMN `cityCountry` VARCHAR(191) NULL,
+  ADD COLUMN `workField` VARCHAR(191) NULL,
+  ADD COLUMN `company` VARCHAR(191) NULL,
+  ADD COLUMN `yearbookFormat` ENUM('MARKDOWN', 'HTML') NOT NULL DEFAULT 'MARKDOWN';
