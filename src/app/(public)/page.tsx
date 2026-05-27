@@ -1,19 +1,23 @@
-import { BookImage, CalendarDays, Camera, GraduationCap, MessagesSquare } from "lucide-react";
+import { BookImage, CalendarDays, Camera, GraduationCap } from "lucide-react";
 import Link from "next/link";
+import { MediaType, TeamCategory } from "@prisma/client";
 
 import { AlbumShowcase } from "@/components/content/album-showcase";
-import { MemoryPostCard } from "@/components/content/memory-post-card";
 import { HomeHeroCarousel } from "@/components/home/home-hero-carousel";
 import { HomeNavigation } from "@/components/home/home-navigation";
+import { HomePostsCarousel, type HomePostItem } from "@/components/home/home-posts-carousel";
 import { prisma } from "@/lib/prisma";
 
 async function loadHomeHighlights() {
   try {
-    const [stories, album] = await Promise.all([
+    const [stories, blogPosts, album, allAlbums, allMediaPosts, classes, teams] = await Promise.all([
       prisma.memoryPost.findMany({
         include: { media: { orderBy: { sortOrder: "asc" } } },
         orderBy: { updatedAt: "desc" },
-        take: 3,
+        where: { publishedAt: { not: null } },
+      }),
+      prisma.post.findMany({
+        orderBy: { updatedAt: "desc" },
         where: { publishedAt: { not: null } },
       }),
       prisma.album.findFirst({
@@ -28,19 +32,192 @@ async function loadHomeHighlights() {
             },
           },
         },
-        orderBy: { updatedAt: "desc" },
+        orderBy: [{ showOnHome: "desc" }, { updatedAt: "desc" }],
+        where: { published: true, showOnHome: true },
+      }),
+      prisma.album.findMany({
+        include: {
+          items: {
+            orderBy: { sortOrder: "asc" },
+            where: { type: { in: [MediaType.IMAGE, MediaType.VIDEO] } },
+          },
+        },
+        orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
         where: { published: true },
+      }),
+      prisma.memoryPost.findMany({
+        include: {
+          media: {
+            orderBy: { sortOrder: "asc" },
+            where: { type: { in: [MediaType.IMAGE, MediaType.VIDEO] } },
+          },
+        },
+        orderBy: { updatedAt: "desc" },
+        where: { publishedAt: { not: null } },
+      }),
+      prisma.class.findMany({
+        orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
+        select: {
+          cardBackgroundImage: true,
+          cardBackgroundImageCrop: true,
+          coverImage: true,
+          coverImageCrop: true,
+          id: true,
+          introduction: true,
+          name: true,
+          slug: true,
+          slogan: true,
+        },
+      }),
+      prisma.team.findMany({
+        orderBy: [{ displayOrder: "asc" }, { category: "asc" }, { year: "desc" }],
+        select: {
+          backgroundImage: true,
+          backgroundImageCrop: true,
+          cardBackgroundImage: true,
+          cardBackgroundImageCrop: true,
+          category: true,
+          coverImage: true,
+          coverImageCrop: true,
+          description: true,
+          id: true,
+          year: true,
+        },
       }),
     ]);
 
-    return { album, stories };
+    return { album, allAlbums, allMediaPosts, blogPosts, classes, stories, teams };
   } catch {
-    return { album: null, stories: [] };
+    return { album: null, allAlbums: [], allMediaPosts: [], blogPosts: [], classes: [], stories: [], teams: [] };
   }
 }
 
+function teamSlug(category: TeamCategory) {
+  if (category === TeamCategory.HSG_TIN) return "hsg-tin";
+  if (category === TeamCategory.FTC) return "ftc";
+  return "ai";
+}
+
+function teamTitle(category: TeamCategory) {
+  if (category === TeamCategory.HSG_TIN) return "Đội tuyển HSG Tin";
+  if (category === TeamCategory.FTC) return "Đội tuyển Robotics FTC";
+  return "Đội tuyển AI";
+}
+
+function uniqueMediaItems<T extends { url: string }>(items: T[]) {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    const key = item.url.trim();
+
+    if (!key || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
 export default async function HomePage() {
-  const { album, stories } = await loadHomeHighlights();
+  const { album, allAlbums, allMediaPosts, blogPosts, classes, stories, teams } = await loadHomeHighlights();
+  const teamItems = Array.from(
+    new Map(teams.map((team) => [team.category, team])).values(),
+  );
+  const navigationItems = [
+    ...classes.map((classroom) => ({
+      backgroundImage: classroom.cardBackgroundImage ?? classroom.coverImage,
+      backgroundPosition: classroom.cardBackgroundImageCrop ?? classroom.coverImageCrop,
+      description:
+        classroom.introduction ??
+        classroom.slogan ??
+        "Không gian lưu giữ hành trình, ảnh, video và lưu bút của lớp.",
+      href: `/${classroom.slug}`,
+      kind: "class" as const,
+      title: classroom.name,
+    })),
+    ...teamItems.map((team) => ({
+      backgroundImage: team.cardBackgroundImage ?? team.coverImage ?? team.backgroundImage,
+      backgroundPosition:
+        team.cardBackgroundImageCrop ?? team.coverImageCrop ?? team.backgroundImageCrop,
+      description:
+        team.description ??
+        `Hành trình luyện tập, thi đấu và kỷ niệm qua các năm của ${teamTitle(team.category)}.`,
+      href: `/${teamSlug(team.category)}`,
+      kind: "team" as const,
+      title: teamTitle(team.category),
+    })),
+    {
+      backgroundImage:
+        "https://drive.google.com/open?id=11wSOdKPYsSX2NkfEVfhGiXxUWuPZ8Ur5&usp=drive_fs",
+      description: "Những chia sẻ, những câu chuyện và những kỷ niệm của chúng ta.",
+      href: "/blog",
+      kind: "blog" as const,
+      title: "Blog",
+    },
+  ];
+  const allPosts: HomePostItem[] = [
+    ...stories.map((post) => ({
+      backgroundImage: post.backgroundImage,
+      backgroundImageCrop: post.backgroundImageCrop,
+      coverImage: post.coverImage,
+      coverImageCrop: post.coverImageCrop,
+      excerpt: post.excerpt,
+      href: `/memory/${post.slug}`,
+      label: post.classId ? "Lớp học" : post.teamId ? "Đội tuyển" : "Lưu bút",
+      title: post.title,
+    })),
+    ...blogPosts.map((post) => ({
+      backgroundImage: post.backgroundImage,
+      backgroundImageCrop: post.backgroundImageCrop,
+      coverImage: post.coverImage,
+      coverImageCrop: post.coverImageCrop,
+      excerpt: post.excerpt,
+      href: `/blog/${post.slug}`,
+      label: "Blog",
+      title: post.title,
+    })),
+  ].filter((post) => !post.href.endsWith("/null"));
+  const featuredPosts = [
+    ...stories.filter((post) => post.showOnHome).map((post) => ({
+      backgroundImage: post.backgroundImage,
+      backgroundImageCrop: post.backgroundImageCrop,
+      coverImage: post.coverImage,
+      coverImageCrop: post.coverImageCrop,
+      excerpt: post.excerpt,
+      href: `/memory/${post.slug}`,
+      label: post.classId ? "Lớp học" : post.teamId ? "Đội tuyển" : "Lưu bút",
+      title: post.title,
+    })),
+    ...blogPosts.filter((post) => post.showOnHome).map((post) => ({
+      backgroundImage: post.backgroundImage,
+      backgroundImageCrop: post.backgroundImageCrop,
+      coverImage: post.coverImage,
+      coverImageCrop: post.coverImageCrop,
+      excerpt: post.excerpt,
+      href: `/blog/${post.slug}`,
+      label: "Blog",
+      title: post.title,
+    })),
+  ].filter((post) => !post.href.endsWith("/null"));
+  const allImageItems = uniqueMediaItems([
+    ...allAlbums.flatMap((item) => item.items).filter((item) => item.type === MediaType.IMAGE),
+    ...allMediaPosts.flatMap((post) => post.media).filter((item) => item.type === MediaType.IMAGE),
+  ]).map((item) => ({
+    caption: item.caption ?? undefined,
+    title: item.title ?? undefined,
+    type: "IMAGE" as const,
+    url: item.url,
+  }));
+  const allVideoItems = uniqueMediaItems([
+    ...allAlbums.flatMap((item) => item.items).filter((item) => item.type === MediaType.VIDEO),
+    ...allMediaPosts.flatMap((post) => post.media).filter((item) => item.type === MediaType.VIDEO),
+  ]).map((item) => ({
+    caption: item.caption ?? undefined,
+    title: item.title ?? undefined,
+    type: "VIDEO" as const,
+    url: item.url,
+  }));
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -89,24 +266,21 @@ export default async function HomePage() {
             Đăng nhập quản trị
           </Link>
         </div>
-        <HomeNavigation />
+        <HomeNavigation items={navigationItems} />
       </section>
 
-      {stories.length ? (
+      {featuredPosts.length ? (
         <section className="border-y border-slate-200 bg-white">
           <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
-            <div className="mb-7 flex items-center gap-3">
-              <MessagesSquare aria-hidden className="h-6 w-6 text-cyan-700" />
-              <div>
-                <p className="text-sm font-medium uppercase text-emerald-700">Ghi chép mới</p>
-                <h2 className="text-2xl font-semibold text-slate-950">Những câu chuyện vừa được lưu lại</h2>
-              </div>
-            </div>
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {stories.map((post) => (
-                <MemoryPostCard key={post.id} label="Kỷ yếu số" post={post} />
-              ))}
-            </div>
+            <HomePostsCarousel posts={featuredPosts} title="Bài viết nổi bật" />
+          </div>
+        </section>
+      ) : null}
+
+      {allPosts.length ? (
+        <section className="border-b border-slate-200 bg-slate-50">
+          <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
+            <HomePostsCarousel posts={allPosts} title="Tất cả bài viết" />
           </div>
         </section>
       ) : null}
@@ -131,6 +305,63 @@ export default async function HomePage() {
                     type: item.type,
                     url: item.url,
                   })),
+                },
+              ]}
+            />
+          </div>
+        </section>
+      ) : null}
+
+      {allImageItems.length ? (
+        <section className="bg-white">
+          <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
+            <div className="mb-7 flex items-center gap-3">
+              <Camera aria-hidden className="h-6 w-6 text-emerald-700" />
+              <div>
+                <p className="text-sm font-medium uppercase text-emerald-700">Tất cả hình ảnh</p>
+                <h2 className="text-2xl font-semibold text-slate-950">Album tổng hợp từ các lớp học và đội tuyển</h2>
+              </div>
+            </div>
+            <AlbumShowcase
+              albums={[
+                {
+                  description: "Tự động gom ảnh từ các album public và media trong bài viết.",
+                  constrainGridHeight: true,
+                  id: "all-home-images",
+                  imageFolderUrl: null,
+                  items: allImageItems,
+                  playlist: null,
+                  title: "Tất cả ảnh",
+                  videoFolderUrl: null,
+                  viewMode: "GRID",
+                },
+              ]}
+            />
+          </div>
+        </section>
+      ) : null}
+
+      {allVideoItems.length ? (
+        <section className="border-t border-slate-200 bg-slate-50">
+          <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 lg:px-10">
+            <div className="mb-7 flex items-center gap-3">
+              <Camera aria-hidden className="h-6 w-6 text-emerald-700" />
+              <div>
+                <p className="text-sm font-medium uppercase text-emerald-700">Tất cả video</p>
+                <h2 className="text-2xl font-semibold text-slate-950">Video tổng hợp từ các lớp học và đội tuyển</h2>
+              </div>
+            </div>
+            <AlbumShowcase
+              albums={[
+                {
+                  description: "Tự động gom video từ các album public và media trong bài viết.",
+                  id: "all-home-videos",
+                  imageFolderUrl: null,
+                  items: allVideoItems,
+                  playlist: null,
+                  title: "Tất cả video",
+                  videoFolderUrl: null,
+                  viewMode: "GRID",
                 },
               ]}
             />

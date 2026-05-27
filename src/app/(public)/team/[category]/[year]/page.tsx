@@ -1,21 +1,63 @@
-import { ArrowLeft, BookOpenText, Camera, Medal, Trophy, UsersRound } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import { TeamCategory } from "@prisma/client";
+import { notFound } from "next/navigation";
 
-import { MediaGallery, type GalleryMediaItem } from "@/components/content/media-gallery";
-import { AlbumShowcase } from "@/components/content/album-showcase";
-import { MemoryPostCard } from "@/components/content/memory-post-card";
-import { RichContent } from "@/components/content/rich-content";
-import { BackgroundCard } from "@/components/ui/background-card";
-import { ImageLightboxButton } from "@/components/ui/image-lightbox";
-import { displayImageUrl } from "@/lib/media-urls";
+import { CollectionPage, type CollectionMember, type CollectionStory } from "@/components/content/collection-page";
+import type { GalleryMediaItem } from "@/components/content/media-gallery";
 import { prisma } from "@/lib/prisma";
+import { collectVideoItems, toGalleryItems, uniqueMediaItems } from "@/lib/public-media";
 
 export const dynamic = "force-dynamic";
 
 const fallbackHero =
   "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1800&q=80";
+
+const fallbackTeamVideo: GalleryMediaItem = {
+  title: "Video kỷ niệm đội tuyển",
+  type: "VIDEO",
+  url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+};
+
+const fallbackTeamAchievements =
+  "## Dấu mốc đáng nhớ\n\n- Cùng nhau luyện tập, thi đấu và hoàn thành các dự án.\n- Lưu lại ảnh, video và câu chuyện của từng mùa hoạt động.\n- Tiếp tục cập nhật thành tích sau mỗi năm học.";
+
+const fallbackTeamMembers: CollectionMember[] = [
+  {
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=700&q=80",
+    backgroundPosition: "center",
+    id: "demo-team-1",
+    name: "Thành viên đội tuyển",
+    nickname: "Coder",
+    role: "Thành viên",
+  },
+  {
+    avatar:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=700&q=80",
+    backgroundPosition: "center",
+    id: "demo-team-2",
+    name: "Gương mặt tiêu biểu",
+    nickname: "Maker",
+    role: "Thành viên",
+  },
+  {
+    avatar:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=700&q=80",
+    backgroundPosition: "center",
+    id: "demo-team-3",
+    name: "Bạn đồng hành",
+    nickname: "Teammate",
+    role: "Thành viên",
+  },
+  {
+    avatar:
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=700&q=80",
+    backgroundPosition: "center",
+    id: "demo-team-4",
+    name: "Người kể chuyện",
+    nickname: "Story",
+    role: "Thành viên",
+  },
+];
 
 function categoryFromSlug(category: string) {
   if (category === "hsg-tin") return TeamCategory.HSG_TIN;
@@ -25,23 +67,57 @@ function categoryFromSlug(category: string) {
 }
 
 function formatTeamName(category: string) {
-  if (category === "hsg-tin") return "Học sinh giỏi - Tin";
+  if (category === "hsg-tin") return "Học sinh giỏi Tin";
   if (category === "ftc") return "FTC Robotics";
   if (category === "ai") return "AI Lab";
   return category;
 }
 
+function fallbackTeamStories(teamName: string, year: number): CollectionStory[] {
+  return [
+    {
+      content: `${teamName} ${year} có những buổi luyện tập, thử nghiệm và hoàn thiện sản phẩm cùng nhau.`,
+      contentFormat: "MARKDOWN" as const,
+      excerpt: "Một câu chuyện minh họa cho hành trình luyện tập và thi đấu của đội tuyển.",
+      id: "fallback-team-story-1",
+      media: [],
+      slug: null,
+      title: "Một buổi luyện tập",
+    },
+    {
+      content: "Những khoảnh khắc sau cuộc thi thường là phần đáng nhớ nhất của cả hành trình.",
+      contentFormat: "MARKDOWN" as const,
+      excerpt: "Không gian chờ cho ảnh, video và bài viết thật của đội tuyển.",
+      id: "fallback-team-story-2",
+      media: [],
+      slug: null,
+      title: "Sau cuộc thi",
+    },
+    {
+      content: "Mỗi thành viên đóng góp một phần riêng để tạo nên tinh thần chung của đội.",
+      contentFormat: "MARKDOWN" as const,
+      excerpt: "Một block minh họa để giữ bố cục đồng đều khi dữ liệu chưa đủ.",
+      id: "fallback-team-story-3",
+      media: [],
+      slug: null,
+      title: "Tinh thần đồng đội",
+    },
+    {
+      content: "Trang này sẽ tiếp tục được cập nhật bằng thành tích, hình ảnh và câu chuyện thật.",
+      contentFormat: "MARKDOWN" as const,
+      excerpt: "Nội dung minh họa có thể được thay thế sau trong trang quản trị.",
+      id: "fallback-team-story-4",
+      media: [],
+      slug: null,
+      title: "Chờ câu chuyện tiếp theo",
+    },
+  ];
+}
+
 function galleryItems(
   team: {
     galleryImages: string[];
-    memoryPosts: {
-      media: {
-        caption?: string | null;
-        title?: string | null;
-        type: GalleryMediaItem["type"];
-        url: string;
-      }[];
-    }[];
+    memoryPosts: { media: Parameters<typeof toGalleryItems>[0] }[];
   },
   fallbackImage: string,
 ) {
@@ -52,23 +128,14 @@ function galleryItems(
   }));
 
   for (const post of team.memoryPosts) {
-    items.push(
-      ...post.media.map((item) => ({
-        caption: item.caption ?? undefined,
-        title: item.title ?? undefined,
-        type: item.type,
-        url: item.url,
-      })),
-    );
+    items.push(...toGalleryItems(post.media));
   }
 
   if (!items.some((item) => item.type === "IMAGE" || item.type === "VIDEO")) {
     items.unshift({ title: "Ảnh đội tuyển", type: "IMAGE", url: fallbackImage });
   }
 
-  return items.filter(
-    (item, index) => items.findIndex((candidate) => candidate.url === item.url) === index,
-  );
+  return uniqueMediaItems(items);
 }
 
 export default async function TeamYearPage({
@@ -126,173 +193,68 @@ export default async function TeamYearPage({
   }
 
   const teamName = formatTeamName(category);
+  const title = `${teamName} ${team.year}`;
   const heroImage =
     team.backgroundImage ?? team.coverImage ?? team.cardBackgroundImage ?? fallbackHero;
   const albumItems = galleryItems(team, heroImage);
+  const realMembers: CollectionMember[] = team.members.map((member) => ({
+    avatar: member.studentProfile.coverImage ?? member.studentProfile.avatar,
+    backgroundPosition:
+      member.studentProfile.coverImageCrop ?? member.studentProfile.avatarCrop ?? "center",
+    id: member.studentProfile.id,
+    name: member.studentProfile.fullName,
+    nickname: member.studentProfile.nickname,
+    role: member.role,
+  }));
+  const members = [...realMembers, ...fallbackTeamMembers].slice(0, Math.max(4, realMembers.length));
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
-      <section className="relative overflow-hidden bg-slate-950 text-white">
-        <div
-          className="absolute inset-0 bg-cover"
-          style={{
-            backgroundImage: `url(${displayImageUrl(heroImage) ?? heroImage})`,
-            backgroundPosition: team.backgroundImageCrop ?? team.coverImageCrop ?? "center",
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/38 to-transparent" />
-        <ImageLightboxButton
-          className="absolute right-5 top-5 z-20"
-          imageUrl={heroImage}
-          label="Xem ảnh bìa"
-        />
-        <div className="relative mx-auto max-w-7xl px-5 py-14 sm:px-8 lg:px-10">
-          <p className="inline-flex items-center gap-2 rounded-md bg-white/12 px-3 py-2 text-sm font-medium text-emerald-100 ring-1 ring-white/15">
-            <Medal aria-hidden className="h-4 w-4" />
-            {teamName}
-          </p>
-          <h1 className="mt-5 text-4xl font-semibold sm:text-6xl">Năm {team.year}</h1>
-          <p className="mt-5 max-w-2xl text-base leading-8 text-slate-100 sm:text-lg">
-            {team.description ?? "Hồ sơ hoạt động và lưu bút của đội tuyển trong năm học này."}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              className="inline-flex items-center gap-2 rounded-md bg-white/12 px-4 py-2 text-sm font-semibold text-white ring-1 ring-white/25 hover:bg-white/20"
-              href={`/${category}`}
-            >
-              <ArrowLeft aria-hidden className="h-4 w-4" />
-              Các năm
-            </Link>
-            {availableYears.map((available) => (
-              <Link
-                className={
-                  available.year === team.year
-                    ? "rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-950"
-                    : "rounded-md bg-white/12 px-3 py-2 text-sm font-medium text-white ring-1 ring-white/20 hover:bg-white/20"
-                }
-                href={`/${category}/${available.year}`}
-                key={available.year}
-              >
-                {available.year}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="border-b border-slate-200 bg-slate-50">
-        <div className="feature-story-layout mx-auto grid max-w-7xl gap-6 px-5 py-10 sm:px-8 lg:px-10">
-          <article className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm ring-1 ring-cyan-100/70 sm:p-7">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-cyan-50 text-cyan-700">
-                <BookOpenText aria-hidden className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-medium uppercase text-emerald-700">Bài viết giới thiệu</p>
-                <h2 className="text-2xl font-semibold">{teamName} {team.year}</h2>
-              </div>
-            </div>
-            <RichContent content={team.introContent ?? team.description ?? ""} format={team.introFormat} />
-            {team.achievements ? (
-              <div className="mt-7 rounded-lg border border-emerald-100 bg-emerald-50/60 p-5">
-                <div className="mb-3 flex items-center gap-2 text-emerald-800">
-                  <Trophy aria-hidden className="h-5 w-5" />
-                  <h3 className="text-lg font-semibold">Thành tích</h3>
-                </div>
-                <RichContent className="text-slate-700" content={team.achievements} />
-              </div>
-            ) : null}
-          </article>
-
-          <aside className="feature-story-aside min-w-0 rounded-lg border border-cyan-100 bg-white/72 p-5 shadow-sm">
-            <div className="mb-5 flex items-center gap-3">
-              <UsersRound aria-hidden className="h-6 w-6 text-emerald-700" />
-              <div>
-                <p className="text-sm font-medium uppercase text-emerald-700">Lưu bút</p>
-                <h2 className="text-2xl font-semibold">Bài viết và chia sẻ</h2>
-              </div>
-            </div>
-            <div className="feature-story-list grid gap-4">
-              {team.memoryPosts.length ? (
-                team.memoryPosts.slice(0, 4).map((post) => (
-                  <MemoryPostCard compact key={post.id} label={`${team.year} · Chia sẻ`} post={post} />
-                ))
-              ) : (
-                <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
-                  Chưa có bài viết được công khai trong năm này.
-                </div>
-              )}
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      <section className="border-b border-slate-200 bg-slate-100">
-        <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
-          <div className="mb-6 flex items-center gap-3">
-            <Camera aria-hidden className="h-6 w-6 text-emerald-700" />
-            <h2 className="text-3xl font-semibold">Album đội tuyển</h2>
-          </div>
-          {team.albums.length ? (
-            <AlbumShowcase
-              albums={team.albums.map((album) => ({
-                ...album,
-                items: album.items.map((item) => ({
-                  caption: item.caption ?? undefined,
-                  title: item.title ?? undefined,
-                  type: item.type,
-                  url: item.url,
-                })),
-              }))}
-            />
-          ) : (
-            <MediaGallery items={albumItems} title={`Album ${teamName} ${team.year}`} />
-          )}
-        </div>
-      </section>
-
-      <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8 lg:px-10">
-          <div className="mb-6">
-            <p className="text-sm font-medium uppercase text-emerald-700">Thành viên</p>
-            <h2 className="mt-2 text-3xl font-semibold">Gương mặt trong đội</h2>
-          </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {team.members.map((member) => (
-              <BackgroundCard
-                backgroundImage={member.studentProfile.coverImage ?? member.studentProfile.avatar}
-                backgroundPosition={
-                  member.studentProfile.coverImageCrop ??
-                  member.studentProfile.avatarCrop ??
-                  "center"
-                }
-                className="min-h-80 p-5 shadow-xl shadow-slate-900/12"
-                key={member.id}
-                overlayClassName="bg-gradient-to-t from-slate-950/12 via-transparent to-transparent"
-                showImageAction
-              >
-                <div className="flex min-h-64 flex-col justify-end">
-                  <Link
-                    className="rounded-md bg-white/94 p-4 shadow-md transition hover:bg-emerald-50"
-                    href={`/student/${member.studentProfile.id}`}
-                  >
-                    {member.role ? (
-                      <p className="text-xs font-semibold uppercase text-emerald-700">
-                        {member.role}
-                      </p>
-                    ) : null}
-                    <h3 className="mt-1 text-lg font-semibold">{member.studentProfile.fullName}</h3>
-                    {member.studentProfile.nickname ? (
-                      <p className="mt-1 text-sm text-slate-600">{member.studentProfile.nickname}</p>
-                    ) : null}
-                  </Link>
-                </div>
-              </BackgroundCard>
-            ))}
-          </div>
-        </div>
-      </section>
-
-    </main>
+    <CollectionPage
+      achievements={{
+        content: team.achievements ?? fallbackTeamAchievements,
+      }}
+      albumItems={albumItems}
+      albums={team.albums.map((album) => ({
+        ...album,
+        constrainGridHeight: true,
+        items: toGalleryItems(album.items),
+      }))}
+      albumTitle="Album đội tuyển"
+      backHref={`/${category}`}
+      backLabel="Các năm"
+      badgeLabel="Trang đội tuyển"
+      description={
+        team.description ??
+        "Hồ sơ hoạt động, album và lưu bút của đội tuyển trong năm học này."
+      }
+      heroImage={heroImage}
+      heroImagePosition={team.backgroundImageCrop ?? team.coverImageCrop}
+      intro={{
+        content: team.introContent ?? team.description ?? title,
+        format: team.introFormat,
+        title,
+      }}
+      members={members}
+      memberEyebrow="Thành viên"
+      memberTitle="Gương mặt trong đội"
+      pageKind="team"
+      stories={[...team.memoryPosts, ...fallbackTeamStories(teamName, team.year)].slice(0, 4)}
+      storyEmptyText="Chưa có bài viết được công khai trong năm này."
+      storyLabel={`${team.year} · Chia sẻ`}
+      title={title}
+      videoItems={collectVideoItems(
+        albumItems,
+        team.albums.map((album) => album.items),
+        fallbackTeamVideo,
+      )}
+      videoSectionEyebrow="Video đội tuyển"
+      videoSectionTitle={`Video tổng hợp ${title}`}
+      videoTitle={`Tất cả video ${title}`}
+      yearLinks={availableYears.map((available) => ({
+        active: available.year === team.year,
+        href: `/${category}/${available.year}`,
+        label: String(available.year),
+      }))}
+    />
   );
 }

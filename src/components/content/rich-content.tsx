@@ -12,6 +12,17 @@ type RichContentProps = {
   className?: string;
 };
 
+function sanitizeEmbeddedHtml(content: string) {
+  return content
+    .replace(/<!doctype[^>]*>/gi, "")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, "")
+    .replace(/<(?:html|body)\b[^>]*>/gi, "")
+    .replace(/<\/(?:html|body)>/gi, "")
+    .replace(/<(?:meta|link|base|title)\b[^>]*>/gi, "");
+}
+
 export function RichContent({
   content,
   format = "MARKDOWN",
@@ -21,7 +32,9 @@ export function RichContent({
     return (
       <div
         className={cn("markdown", className)}
-        dangerouslySetInnerHTML={{ __html: displayImageSourcesInHtml(content) }}
+        dangerouslySetInnerHTML={{
+          __html: displayImageSourcesInHtml(sanitizeEmbeddedHtml(content)),
+        }}
       />
     );
   }

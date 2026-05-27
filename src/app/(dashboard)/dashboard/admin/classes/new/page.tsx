@@ -71,6 +71,9 @@ export default async function NewClassPage({
             <Field label="Slogan">
               <input className={inputClass} name="slogan" />
             </Field>
+            <Field label="Thứ tự trên trang chủ">
+              <input className={inputClass} defaultValue={0} name="displayOrder" type="number" />
+            </Field>
           </FormGrid>
           <FormGrid>
             <ImageField

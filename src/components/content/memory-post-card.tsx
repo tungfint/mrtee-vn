@@ -43,21 +43,21 @@ export function MemoryPostCard({
       backgroundImage={image}
       backgroundPosition={post.coverImageCrop ?? post.backgroundImageCrop ?? "center"}
       className={compact ? "min-h-56 p-4" : "min-h-72 p-5"}
-      overlayClassName={image ? "bg-gradient-to-t from-slate-950/26 via-transparent to-transparent" : "bg-white"}
+      overlayClassName={image ? "bg-gradient-to-t from-white/16 via-transparent to-transparent" : "bg-white"}
       showImageAction={Boolean(image)}
     >
       <div className={compact ? "flex min-h-48 flex-col justify-end" : "flex min-h-60 flex-col justify-end"}>
-        <div className={image ? "rounded-md bg-slate-950/68 p-4 text-white shadow-lg backdrop-blur-[2px]" : "text-slate-950"}>
-          <p className={image ? "text-xs font-semibold uppercase text-emerald-100" : "text-xs font-semibold uppercase text-emerald-700"}>
+        <div className={image ? "rounded-md bg-white/74 p-4 text-slate-950 shadow-lg backdrop-blur-[2px]" : "text-slate-950"}>
+          <p className="text-xs font-semibold uppercase text-emerald-700">
             {label}
           </p>
           <h3 className="mt-2 text-xl font-semibold">{post.title}</h3>
-          <p className={image ? "mt-3 line-clamp-3 text-sm leading-6 text-slate-100" : "mt-3 line-clamp-3 text-sm leading-6 text-slate-600"}>
+          <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
             {excerptFor(post)}
           </p>
           <div className="mt-4 flex items-center justify-between gap-3">
             {post.media?.length ? (
-              <span className={image ? "inline-flex items-center gap-1 text-xs text-slate-100" : "inline-flex items-center gap-1 text-xs text-slate-500"}>
+              <span className="inline-flex items-center gap-1 text-xs text-slate-500">
                 <Images aria-hidden className="h-3.5 w-3.5" />
                 {post.media.length} media
               </span>
@@ -66,7 +66,7 @@ export function MemoryPostCard({
             )}
             {post.slug ? (
               <Link
-                className={image ? "inline-flex items-center gap-1 text-sm font-semibold text-white hover:text-emerald-100" : "inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 hover:text-emerald-900"}
+                className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 hover:text-emerald-900"
                 href={`/memory/${post.slug}`}
               >
                 Đọc tiếp

@@ -1,4 +1,4 @@
-import type { AlbumItem, MusicPlaylist } from "@prisma/client";
+import { AlbumViewMode, type AlbumItem, type MusicPlaylist } from "@prisma/client";
 
 import {
   Field,
@@ -15,7 +15,9 @@ type ManagedAlbum = {
   imageFolderUrl: string | null;
   videoFolderUrl: string | null;
   published: boolean;
+  showOnHome: boolean;
   sortOrder: number;
+  viewMode: AlbumViewMode;
   playlistId: string | null;
   items: AlbumItem[];
 };
@@ -74,9 +76,23 @@ function AlbumFields({
             ))}
           </select>
         </Field>
+        <Field label="Chế độ xem">
+          <select
+            className={selectClass}
+            defaultValue={album?.viewMode ?? AlbumViewMode.SLIDE}
+            name="viewMode"
+          >
+            <option value={AlbumViewMode.SLIDE}>Slide</option>
+            <option value={AlbumViewMode.GRID}>Grid</option>
+          </select>
+        </Field>
         <label className="flex items-end gap-2 pb-3 text-sm font-medium text-slate-700">
           <input defaultChecked={album?.published ?? true} name="published" type="checkbox" />
           Public album
+        </label>
+        <label className="flex items-end gap-2 pb-3 text-sm font-medium text-slate-700">
+          <input defaultChecked={album?.showOnHome ?? false} name="showOnHome" type="checkbox" />
+          Hiển thị ở trang chủ
         </label>
       </FormGrid>
       <Field label="Mô tả album">

@@ -1,11 +1,16 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Code2, Pause, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pause, Play, Quote } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
 import { displayImageUrl } from "@/lib/media-urls";
+
+const introLines = [
+  "Nơi lưu giữ kỷ niệm của các lớp học và các thế hệ học sinh của thầy Tùng.",
+  "Những câu chuyện trưởng thành sẽ tiếp tục được viết nên từ đây, và mãi về sau.",
+];
 
 const slides = [
   {
@@ -39,7 +44,7 @@ const slides = [
       "https://drive.google.com/open?id=1A2Fcf4HAdmdzZXPd391xVF3R6nhm8BVz&usp=drive_fs",
   },
   {
-    caption: "Đội tuyển AI · Tuổi trẻ của chúng ta: code, robot, AI và những giấc mơ chưa giới hạn.",
+    caption: "Đội tuyển AI · Code, robot, AI và những giấc mơ chưa giới hạn.",
     image:
       "https://drive.google.com/open?id=11XTbGqwgxzRd8J4NwfUEy6_FpRdxEfDK&usp=drive_fs",
   },
@@ -76,17 +81,20 @@ export function HomeHeroCarousel() {
           style={{ backgroundImage: `url(${displayImageUrl(slide.image) ?? slide.image})` }}
         />
       ))}
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/86 via-slate-950/35 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-slate-950/72 to-transparent" />
+      <div className="absolute inset-0 bg-slate-950/10" />
+      <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/82 via-slate-950/28 to-transparent" />
+
       <div className="relative mx-auto flex min-h-[min(84vh,820px)] max-w-7xl flex-col px-5 sm:px-8 lg:px-10">
-        <header className="flex items-center justify-between border-b border-white/16 py-5">
-          <div className="flex min-w-0 items-center gap-2.5 text-white sm:gap-5">
-            <Link className="font-code shrink-0 text-sm font-semibold text-white sm:text-lg" href="/">
+        <header className="flex items-center justify-between gap-5 border-b border-white/16 py-5">
+          <div className="flex min-w-0 items-center gap-3 rounded-md bg-slate-950/38 px-3 py-2 shadow-lg shadow-slate-950/20 ring-1 ring-white/16 backdrop-blur-sm sm:gap-5">
+            <Link
+              className="font-code shrink-0 text-lg font-semibold tracking-wide text-white drop-shadow sm:text-2xl"
+              href="/"
+            >
               mrtee.vn
             </Link>
-            <span aria-hidden className="h-5 w-px shrink-0 bg-white/25" />
-            <p className="slogan-type flex min-w-0 items-center gap-1.5 whitespace-nowrap text-base text-cyan-50 sm:gap-2 sm:text-2xl">
-              <Code2 aria-hidden className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" />
+            <span aria-hidden className="hidden h-5 w-px shrink-0 bg-white/24 sm:block" />
+            <p className="slogan-type min-w-0 truncate text-lg leading-none text-white drop-shadow sm:text-2xl">
               If you never try, you&apos;ll never know!
             </p>
           </div>
@@ -98,18 +106,15 @@ export function HomeHeroCarousel() {
           </nav>
         </header>
 
-        <div className="flex flex-1 items-end py-12 sm:py-14">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl font-semibold leading-tight text-white sm:text-6xl">
-              mrtee.vn
-            </h1>
-            <div className="mt-6 max-w-2xl border-l-2 border-cyan-200/80 pl-5 text-slate-50 sm:mt-8 sm:pl-6">
-              <p className="text-lg leading-8 sm:text-xl sm:leading-9">
-                Nơi lưu giữ kỷ niệm của các lớp học và các thế hệ học sinh của thầy Tùng.
-              </p>
-              <p className="mt-2 text-sm leading-7 text-cyan-50/90 sm:text-base">
-                Những câu chuyện trưởng thành tiếp tục được viết bằng tri thức, sáng tạo và tình bạn.
-              </p>
+        <div className="flex flex-1 items-end py-8 sm:py-10">
+          <div className="w-full max-w-3xl">
+            <div className="border-l-2 border-emerald-300/90 bg-slate-950/28 px-4 py-3 shadow-xl shadow-slate-950/20 backdrop-blur-[2px] sm:px-5">
+              <div className="grid gap-1 font-code text-sm font-medium leading-7 text-white sm:text-base sm:leading-8">
+                {introLines.map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
+              </div>
+              <Quote aria-hidden className="mt-2 h-4 w-4 text-emerald-200" />
             </div>
           </div>
         </div>

@@ -122,6 +122,7 @@ export default async function TeamPage({
         {teams.length ? (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {teams.map((team) => (
+              <Link className="group block transition hover:-translate-y-0.5" href={`/${category}/${team.year}`} key={team.id}>
               <BackgroundCard
                 backgroundImage={
                   team.cardBackgroundImage ??
@@ -132,29 +133,25 @@ export default async function TeamPage({
                 backgroundPosition={
                   team.cardBackgroundImageCrop ?? team.coverImageCrop ?? "center"
                 }
-                className="min-h-80 p-5"
-                key={team.id}
-                overlayClassName="bg-gradient-to-t from-slate-950/20 via-transparent to-transparent"
-                showImageAction
+                className="min-h-80 p-5 shadow-xl shadow-slate-900/12 group-hover:shadow-emerald-900/20"
+                overlayClassName="bg-gradient-to-t from-white/16 via-transparent to-transparent"
               >
                 <div className="flex min-h-72 flex-col justify-end">
-                  <div className="rounded-md bg-slate-950/62 p-5 text-white shadow-lg">
-                    <p className="text-sm font-medium text-emerald-100">{teamName}</p>
+                  <div className="rounded-md bg-white/74 p-5 text-slate-950 shadow-lg backdrop-blur-[2px] transition group-hover:bg-white/84">
+                    <p className="text-sm font-medium text-emerald-700">{teamName}</p>
                     <h3 className="mt-2 text-4xl font-semibold">{team.year}</h3>
-                    <p className="mt-3 flex items-center gap-2 text-sm text-slate-100">
+                    <p className="mt-3 flex items-center gap-2 text-sm text-slate-600">
                       <UsersRound aria-hidden className="h-4 w-4" />
                       {team._count.members} thành viên · {team._count.memoryPosts} bài viết
                     </p>
-                    <Link
-                      className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white hover:text-emerald-100"
-                      href={`/${category}/${team.year}`}
-                    >
+                    <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700">
                       Mở trang năm {team.year}
                       <ArrowRight aria-hidden className="h-4 w-4" />
-                    </Link>
+                    </span>
                   </div>
                 </div>
               </BackgroundCard>
+              </Link>
             ))}
           </div>
         ) : (

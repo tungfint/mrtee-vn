@@ -184,6 +184,10 @@ export default async function EditClassPage({
           <input defaultChecked={Boolean(post.publishedAt)} name="published" type="checkbox" />
           Public bài viết
         </label>
+        <label className="flex items-end gap-2 pb-3 text-sm font-medium text-slate-700">
+          <input defaultChecked={post.showOnHome} name="showOnHome" type="checkbox" />
+          Hiển thị ở trang chủ
+        </label>
       </FormGrid>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <ImageField
@@ -309,6 +313,14 @@ export default async function EditClassPage({
                 className={inputClass}
                 defaultValue={classroom.slogan ?? ""}
                 name="slogan"
+              />
+            </Field>
+            <Field label="Thứ tự trên trang chủ">
+              <input
+                className={inputClass}
+                defaultValue={classroom.displayOrder}
+                name="displayOrder"
+                type="number"
               />
             </Field>
             <Field label="Link media ngoài">
@@ -533,6 +545,10 @@ export default async function EditClassPage({
               <label className="flex items-end gap-2 pb-3 text-sm font-medium text-slate-700">
                 <input name="published" type="checkbox" />
                 Public ngay
+              </label>
+              <label className="flex items-end gap-2 pb-3 text-sm font-medium text-slate-700">
+                <input name="showOnHome" type="checkbox" />
+                Hiển thị ở trang chủ
               </label>
             </FormGrid>
             <FormGrid>

@@ -154,6 +154,10 @@ export default async function AdminMemoriesPage() {
               <input name="published" type="checkbox" />
               Xuất bản
             </label>
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <input name="showOnHome" type="checkbox" />
+              Hiển thị ở trang chủ
+            </label>
             <Field label="Tóm tắt">
               <textarea className={textareaClass} name="excerpt" />
             </Field>
@@ -281,6 +285,14 @@ export default async function AdminMemoriesPage() {
                       type="checkbox"
                     />
                     Xuất bản
+                  </label>
+                  <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                    <input
+                      defaultChecked={memory.showOnHome}
+                      name="showOnHome"
+                      type="checkbox"
+                    />
+                    Hiển thị ở trang chủ
                   </label>
                   <Field label="Tóm tắt">
                     <textarea

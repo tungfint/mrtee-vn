@@ -132,6 +132,39 @@ export function embeddedVideoUrl(url: string) {
   return null;
 }
 
+export function mediaPreviewImageUrl(url: string) {
+  const driveFile = googleDriveFile(url);
+
+  if (driveFile) {
+    const params = new URLSearchParams({ id: driveFile.id, sz: "w1200" });
+
+    if (driveFile.resourceKey) {
+      params.set("resourcekey", driveFile.resourceKey);
+    }
+
+    return `https://drive.google.com/thumbnail?${params.toString()}`;
+  }
+
+  try {
+    const parsed = new URL(url);
+
+    if (parsed.hostname === "youtu.be") {
+      return `https://img.youtube.com/vi/${parsed.pathname.slice(1)}/hqdefault.jpg`;
+    }
+
+    if (parsed.hostname === "youtube.com" || parsed.hostname === "www.youtube.com") {
+      const videoId = parsed.pathname.startsWith("/embed/")
+        ? parsed.pathname.split("/")[2]
+        : parsed.searchParams.get("v");
+      return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 export function displayImageSourcesInHtml(content: string) {
   return content.replace(
     /(<img\b[^>]*?\bsrc=["'])([^"']+)(["'])/gi,

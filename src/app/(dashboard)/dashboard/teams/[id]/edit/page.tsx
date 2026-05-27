@@ -182,6 +182,10 @@ export default async function EditTeamPage({
           <input defaultChecked={Boolean(post.publishedAt)} name="published" type="checkbox" />
           Public bài viết
         </label>
+        <label className="flex items-end gap-2 pb-3 text-sm font-medium text-slate-700">
+          <input defaultChecked={post.showOnHome} name="showOnHome" type="checkbox" />
+          Hiển thị ở trang chủ
+        </label>
       </FormGrid>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <ImageField
@@ -319,6 +323,14 @@ export default async function EditTeamPage({
                   </option>
                 ))}
               </select>
+            </Field>
+            <Field label="Thứ tự trên trang chủ">
+              <input
+                className={inputClass}
+                defaultValue={team.displayOrder}
+                name="displayOrder"
+                type="number"
+              />
             </Field>
             <Field label="Thư viện ảnh cũ (hiển thị khi chưa tạo Album)">
               <textarea
@@ -535,6 +547,10 @@ export default async function EditTeamPage({
               <label className="flex items-end gap-2 pb-3 text-sm font-medium text-slate-700">
                 <input name="published" type="checkbox" />
                 Public ngay
+              </label>
+              <label className="flex items-end gap-2 pb-3 text-sm font-medium text-slate-700">
+                <input name="showOnHome" type="checkbox" />
+                Hiển thị ở trang chủ
               </label>
             </FormGrid>
             <FormGrid>

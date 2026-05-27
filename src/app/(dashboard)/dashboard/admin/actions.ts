@@ -108,6 +108,17 @@ function actionCompleted(path: string, message: string): never {
   redirect(feedbackUrl(path, "success", message));
 }
 
+function parsedOrder(formData: FormData) {
+  const value = required(formData, "orderedIds");
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 function parsedTrackLines(formData: FormData) {
   const value = optional(formData, "tracks") ?? "";
 
@@ -229,6 +240,7 @@ export async function createClassAction(formData: FormData) {
         cardBackgroundImageCrop: optional(formData, "cardBackgroundImageCrop"),
         coverImage: await optionalImage(formData, "coverImage"),
         coverImageCrop: optional(formData, "coverImageCrop"),
+        displayOrder: Number(optional(formData, "displayOrder") ?? "0"),
         externalMediaUrl: optional(formData, "externalMediaUrl"),
         introduction: optional(formData, "introduction"),
         name,
@@ -260,6 +272,7 @@ export async function updateClassAction(formData: FormData) {
       cardBackgroundImageCrop: optional(formData, "cardBackgroundImageCrop"),
       coverImage: await optionalImage(formData, "coverImage"),
       coverImageCrop: optional(formData, "coverImageCrop"),
+      displayOrder: Number(optional(formData, "displayOrder") ?? "0"),
       externalMediaUrl: optional(formData, "externalMediaUrl"),
       introduction: optional(formData, "introduction"),
       name,
@@ -289,6 +302,23 @@ export async function assignClassMonitorAction(formData: FormData) {
 
   revalidatePath("/dashboard/admin/classes");
   actionCompleted(path, "Đã lưu phân công lớp trưởng.");
+}
+
+export async function reorderClassesAction(formData: FormData) {
+  await requireAdmin();
+  const ids = parsedOrder(formData);
+
+  if (!ids.length) {
+    actionFailed("/dashboard/admin/classes", "Không có thứ tự lớp hợp lệ để lưu.");
+  }
+
+  await prisma.$transaction(
+    ids.map((id, displayOrder) =>
+      prisma.class.update({ data: { displayOrder }, where: { id } }),
+    ),
+  );
+
+  actionCompleted("/dashboard/admin/classes", "Đã lưu thứ tự lớp học.");
 }
 
 export async function createStudentAction(formData: FormData) {
@@ -628,6 +658,7 @@ export async function createTeamAction(formData: FormData) {
         coverImage: await optionalImage(formData, "coverImage"),
         coverImageCrop: optional(formData, "coverImageCrop"),
         description: optional(formData, "description"),
+        displayOrder: Number(optional(formData, "displayOrder") ?? "0"),
         galleryImages: (optional(formData, "galleryImages") ?? "")
           .split("\n")
           .map((item) => item.trim())
@@ -662,6 +693,7 @@ export async function updateTeamAction(formData: FormData) {
       coverImage: await optionalImage(formData, "coverImage"),
       coverImageCrop: optional(formData, "coverImageCrop"),
       description: optional(formData, "description"),
+      displayOrder: Number(optional(formData, "displayOrder") ?? "0"),
       galleryImages: (optional(formData, "galleryImages") ?? "")
         .split("\n")
         .map((item) => item.trim())
@@ -693,6 +725,23 @@ export async function assignTeamMonitorAction(formData: FormData) {
 
   revalidatePath("/dashboard/admin/teams");
   actionCompleted(path, "Đã lưu phân công đội trưởng.");
+}
+
+export async function reorderTeamsAction(formData: FormData) {
+  await requireAdmin();
+  const ids = parsedOrder(formData);
+
+  if (!ids.length) {
+    actionFailed("/dashboard/admin/teams", "Không có thứ tự đội tuyển hợp lệ để lưu.");
+  }
+
+  await prisma.$transaction(
+    ids.map((id, displayOrder) =>
+      prisma.team.update({ data: { displayOrder }, where: { id } }),
+    ),
+  );
+
+  actionCompleted("/dashboard/admin/teams", "Đã lưu thứ tự đội tuyển.");
 }
 
 export async function addTeamMemberAction(formData: FormData) {
@@ -750,6 +799,7 @@ export async function createPostAction(formData: FormData) {
       coverImageCrop: optional(formData, "coverImageCrop"),
       excerpt: optional(formData, "excerpt"),
       publishedAt: optionalPublishedAt(formData),
+      showOnHome: formData.get("showOnHome") === "on",
       slug: optional(formData, "slug") ?? defaultSlug(title),
       title,
     },
@@ -774,6 +824,7 @@ export async function updatePostAction(formData: FormData) {
       coverImageCrop: optional(formData, "coverImageCrop"),
       excerpt: optional(formData, "excerpt"),
       publishedAt: optionalPublishedAt(formData),
+      showOnHome: formData.get("showOnHome") === "on",
       slug: optional(formData, "slug") ?? defaultSlug(title),
       title,
     },
@@ -799,6 +850,7 @@ export async function createMemoryPostAction(formData: FormData) {
       coverImageCrop: optional(formData, "coverImageCrop"),
       excerpt: optional(formData, "excerpt"),
       publishedAt: optionalPublishedAt(formData),
+      showOnHome: formData.get("showOnHome") === "on",
       slug: optional(formData, "slug") ?? defaultSlug(title),
       studentProfileId: optionalStudentProfileId(formData),
       teamId: optionalTeamId(formData),
@@ -827,6 +879,7 @@ export async function updateMemoryPostAction(formData: FormData) {
       coverImageCrop: optional(formData, "coverImageCrop"),
       excerpt: optional(formData, "excerpt"),
       publishedAt: optionalPublishedAt(formData),
+      showOnHome: formData.get("showOnHome") === "on",
       slug: optional(formData, "slug") ?? defaultSlug(title),
       studentProfileId: optionalStudentProfileId(formData),
       teamId: optionalTeamId(formData),

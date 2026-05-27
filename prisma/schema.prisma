@@ -38,6 +38,11 @@ enum MediaType {
   FILE
 }
 
+enum AlbumViewMode {
+  SLIDE
+  GRID
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -76,6 +81,7 @@ model Class {
   introduction            String? @db.Text
   achievements            String? @db.Text
   externalMediaUrl        String?
+  displayOrder            Int     @default(0)
 
   monitorId   String?      @unique
   monitor     User?        @relation("ClassMonitor", fields: [monitorId], references: [id], onDelete: SetNull)
@@ -137,6 +143,7 @@ model Team {
   backgroundImage         String?
   backgroundImageCrop     String?
   galleryImages           String[]      @default([])
+  displayOrder            Int           @default(0)
 
   monitorId   String?
   monitor     User?        @relation("TeamMonitor", fields: [monitorId], references: [id], onDelete: SetNull)
@@ -207,6 +214,7 @@ model Post {
   content             String        @db.Text
   contentFormat       ContentFormat @default(MARKDOWN)
   publishedAt         DateTime?
+  showOnHome          Boolean       @default(false)
 
   authorId String?
   author   User?   @relation("PostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
@@ -230,6 +238,7 @@ model MemoryPost {
   content             String         @db.Text
   contentFormat       ContentFormat  @default(MARKDOWN)
   publishedAt         DateTime?
+  showOnHome          Boolean        @default(false)
 
   authorId String?
   author   User?   @relation("MemoryPostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
@@ -279,6 +288,8 @@ model Album {
   imageFolderUrl String?
   videoFolderUrl String?
   published      Boolean @default(true)
+  showOnHome     Boolean @default(false)
+  viewMode       AlbumViewMode @default(SLIDE)
   sortOrder      Int     @default(0)
 
   classId String?

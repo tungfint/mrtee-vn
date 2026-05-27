@@ -35,12 +35,12 @@ export default function BlogPage() {
               <BackgroundCard
                 backgroundImage={post.backgroundImage}
                 className="min-h-56 p-6"
-                overlayClassName="bg-gradient-to-t from-slate-950/20 via-transparent to-transparent"
+                overlayClassName="bg-gradient-to-t from-white/16 via-transparent to-transparent"
               >
                 <div className="flex min-h-40 flex-col justify-end">
-                  <div className="rounded-md bg-slate-950/68 p-4 text-white shadow-lg backdrop-blur-[2px]">
+                  <div className="rounded-md bg-white/74 p-4 text-slate-950 shadow-lg backdrop-blur-[2px] transition group-hover:bg-white/84">
                     <h2 className="text-2xl font-semibold">{post.title}</h2>
-                    <p className="mt-2 max-w-xl text-sm leading-6 text-slate-100">
+                    <p className="mt-2 line-clamp-2 max-w-xl text-sm leading-6 text-slate-600">
                       {post.excerpt}
                     </p>
                   </div>

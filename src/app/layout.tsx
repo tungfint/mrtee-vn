@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Dancing_Script, Geist, JetBrains_Mono } from "next/font/google";
+import { Be_Vietnam_Pro, JetBrains_Mono, Kalam } from "next/font/google";
 
 import { SiteMusicPlayer } from "@/components/audio/site-music-player";
 import { prisma } from "@/lib/prisma";
 
 import "./globals.css";
 
-const geistSans = Geist({
+const geistSans = Be_Vietnam_Pro({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const jetBrainsMono = JetBrains_Mono({
@@ -16,9 +17,10 @@ const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin", "vietnamese"],
 });
 
-const dancingScript = Dancing_Script({
+const kalam = Kalam({
   variable: "--font-slogan",
-  subsets: ["latin", "vietnamese"],
+  weight: ["400", "700"],
+  subsets: ["latin", "latin-ext"],
 });
 
 export const metadata: Metadata = {
@@ -56,7 +58,7 @@ export default async function RootLayout({
 
   return (
     <html
-      className={`${geistSans.variable} ${jetBrainsMono.variable} ${dancingScript.variable}`}
+      className={`${geistSans.variable} ${jetBrainsMono.variable} ${kalam.variable}`}
       lang="vi"
       suppressHydrationWarning
     >
