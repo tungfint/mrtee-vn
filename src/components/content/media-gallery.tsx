@@ -231,7 +231,7 @@ export function MediaGallery({
             <div
               className={
                 constrainGridHeight
-                  ? "gallery-scroll grid max-h-[560px] gap-3 overflow-y-auto pr-1 sm:grid-cols-2 lg:max-h-[680px] lg:grid-cols-4"
+                  ? "gallery-scroll grid max-h-[760px] gap-3 overflow-y-auto pr-1 sm:max-h-[560px] sm:grid-cols-2 lg:max-h-[680px] lg:grid-cols-4"
                   : "grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
               }
             >
@@ -250,7 +250,7 @@ export function MediaGallery({
                   >
                     <img
                       alt={image.title ?? `${title} ${index + 1}`}
-                      className="aspect-[4/3] w-full object-cover transition group-hover:scale-105"
+                      className="gallery-grid-image w-full object-cover transition group-hover:scale-105 sm:aspect-[4/3] sm:h-auto"
                       src={imageUrl}
                     />
                     <span className="block truncate px-3 py-2 text-xs font-medium text-slate-700">

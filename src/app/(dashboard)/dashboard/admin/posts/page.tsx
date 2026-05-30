@@ -102,6 +102,7 @@ export default async function AdminPostsPage() {
               <form
                 action={updatePostAction}
                 className="rounded-lg border border-slate-200 bg-slate-50 p-4"
+                id={`post-${post.id}`}
                 key={post.id}
               >
                 <input name="id" type="hidden" value={post.id} />

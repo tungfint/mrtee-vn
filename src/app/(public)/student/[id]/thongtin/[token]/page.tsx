@@ -1,3 +1,4 @@
+import { StudentPageScope } from "@prisma/client";
 import { notFound } from "next/navigation";
 
 import { StudentInputForm } from "@/components/content/student-input-form";
@@ -9,54 +10,34 @@ function dateValue(date?: Date | null) {
   return date ? date.toISOString().slice(0, 10) : "";
 }
 
-function categoryFromSlug(slug: string) {
-  if (slug === "hsg-tin") return "HSG_TIN";
-  if (slug === "ftc") return "FTC";
-  if (slug === "ai") return "AI";
-  return null;
-}
-
-export default async function TeamStudentInfoPage({
+export default async function IndependentStudentInfoPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string; year: string; studentSlug: string; token: string }>;
+  params: Promise<{ id: string; token: string }>;
   searchParams: Promise<{ saved?: string }>;
 }) {
-  const { slug, studentSlug, token, year } = await params;
+  const { id, token } = await params;
   const query = await searchParams;
-  const category = categoryFromSlug(slug);
-  const yearNumber = Number(year);
-
-  if (!category || !Number.isInteger(yearNumber)) {
-    notFound();
-  }
-
   const studentPage = await prisma.studentPage.findFirst({
-    include: {
-      studentProfile: { include: { user: { select: { email: true } } } },
-      team: { select: { category: true, year: true } },
-    },
+    include: { studentProfile: { include: { user: { select: { email: true } } } } },
     where: {
       inputToken: token,
-      studentSlug,
-      team: {
-        category: category as "HSG_TIN" | "FTC" | "AI",
-        year: yearNumber,
-      },
+      scope: StudentPageScope.INDEPENDENT,
+      studentSlug: id,
     },
   });
 
-  if (!studentPage?.team) {
+  if (!studentPage) {
     notFound();
   }
 
   const profile = studentPage.studentProfile;
-  const publicHref = `/${slug}/${year}/${studentPage.studentSlug}`;
+  const publicHref = `/student/${studentPage.studentSlug}`;
 
   return (
     <StudentInputForm
-      contextLabel={`Đội tuyển ${slug}/${year}`}
+      contextLabel="Hồ sơ cá nhân"
       initialData={{
         avatar: profile.avatar,
         cityCountry: profile.cityCountry,

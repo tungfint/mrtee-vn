@@ -46,6 +46,7 @@ enum AlbumViewMode {
 enum StudentPageScope {
   CLASS
   TEAM
+  INDEPENDENT
 }
 
 model User {
@@ -126,6 +127,7 @@ model StudentProfile {
   cityCountry      String?
   workField        String?
   company          String?
+  contactMethod    String?   @db.Text
   hobbies          String?   @db.Text
   futureGoal       String?   @db.Text
   yearbookMessage  String?   @db.Text

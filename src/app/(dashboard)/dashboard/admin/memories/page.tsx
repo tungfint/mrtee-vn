@@ -179,6 +179,7 @@ export default async function AdminMemoriesPage() {
               <form
                 action={updateMemoryPostAction}
                 className="rounded-lg border border-slate-200 bg-slate-50 p-4"
+                id={`memory-${memory.id}`}
                 key={memory.id}
               >
                 <input name="id" type="hidden" value={memory.id} />

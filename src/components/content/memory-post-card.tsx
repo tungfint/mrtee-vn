@@ -37,20 +37,17 @@ export function MemoryPostCard({
   post: MemoryPostPreview;
 }) {
   const image = post.coverImage ?? post.backgroundImage;
-
-  return (
+  const card = (
     <BackgroundCard
       backgroundImage={image}
       backgroundPosition={post.coverImageCrop ?? post.backgroundImageCrop ?? "center"}
       className={compact ? "min-h-56 p-4" : "min-h-72 p-5"}
       overlayClassName={image ? "bg-gradient-to-t from-white/16 via-transparent to-transparent" : "bg-white"}
-      showImageAction={Boolean(image)}
+      showImageAction={false}
     >
       <div className={compact ? "flex min-h-48 flex-col justify-end" : "flex min-h-60 flex-col justify-end"}>
         <div className={image ? "rounded-md bg-white/74 p-4 text-slate-950 shadow-lg backdrop-blur-[2px]" : "text-slate-950"}>
-          <p className="text-xs font-semibold uppercase text-emerald-700">
-            {label}
-          </p>
+          <p className="text-xs font-semibold uppercase text-emerald-700">{label}</p>
           <h3 className="mt-2 text-xl font-semibold">{post.title}</h3>
           <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
             {excerptFor(post)}
@@ -65,17 +62,25 @@ export function MemoryPostCard({
               <BookOpenText aria-hidden className="h-4 w-4 text-emerald-600" />
             )}
             {post.slug ? (
-              <Link
-                className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 hover:text-emerald-900"
-                href={`/memory/${post.slug}`}
-              >
+              <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 group-hover:text-emerald-900">
                 Đọc tiếp
                 <ArrowRight aria-hidden className="h-4 w-4" />
-              </Link>
+              </span>
             ) : null}
           </div>
         </div>
       </div>
     </BackgroundCard>
   );
+
+  if (!post.slug) {
+    return card;
+  }
+
+  return (
+    <Link className="group block h-full transition hover:-translate-y-0.5" href={`/memory/${post.slug}`}>
+      {card}
+    </Link>
+  );
 }
+

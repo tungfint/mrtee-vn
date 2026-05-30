@@ -45,6 +45,10 @@ export default async function AdminStudentsPage() {
   ]);
 
   const linkContexts = [
+    {
+      id: `${StudentPageScope.INDEPENDENT}:none`,
+      label: "Hồ sơ độc lập",
+    },
     ...classes.map((item) => ({
       id: `${StudentPageScope.CLASS}:${item.id}`,
       label: `${item.name} /${item.slug}`,
@@ -61,9 +65,12 @@ export default async function AdminStudentsPage() {
 
   const linkRows: StudentLinkRow[] = studentPages.map((page) => {
     const isClass = page.scope === StudentPageScope.CLASS;
+    const isTeam = page.scope === StudentPageScope.TEAM;
     const contextPath = isClass
       ? `/${page.class?.slug ?? ""}`
-      : `/${page.team?.category.toLowerCase().replace("_", "-")}/${page.team?.year}`;
+      : isTeam
+        ? `/${page.team?.category.toLowerCase().replace("_", "-")}/${page.team?.year}`
+        : "/student";
     const publicHref = `${contextPath}/${page.studentSlug}`;
     const absolutePublicHref = `${siteUrl()}${publicHref}`;
 
@@ -71,10 +78,14 @@ export default async function AdminStudentsPage() {
       articleHref: `${absolutePublicHref}/baiviet/${page.inputToken}`,
       contextId: isClass
         ? `${StudentPageScope.CLASS}:${page.classId}`
-        : `${StudentPageScope.TEAM}:${page.teamId}`,
+        : isTeam
+          ? `${StudentPageScope.TEAM}:${page.teamId}`
+          : `${StudentPageScope.INDEPENDENT}:none`,
       contextLabel: isClass
         ? `${page.class?.name ?? "Lớp học"} /${page.class?.slug ?? ""}`
-        : `${page.team?.category.toLowerCase().replace("_", "-")}/${page.team?.year}`,
+        : isTeam
+          ? `${page.team?.category.toLowerCase().replace("_", "-")}/${page.team?.year}`
+          : "Hồ sơ độc lập",
       id: page.id,
       infoHref: `${absolutePublicHref}/thongtin/${page.inputToken}`,
       publicHref: absolutePublicHref,
@@ -98,6 +109,7 @@ export default async function AdminStudentsPage() {
           <form action={importStudentPagesAction} className="grid gap-4">
             <Field label="Lớp / đội tuyển">
               <select className={selectClass} name="studentPageContext" required>
+                <option value={`${StudentPageScope.INDEPENDENT}:none`}>Hồ sơ độc lập - không thuộc lớp/đội tuyển</option>
                 <optgroup label="Lớp học">
                   {classes.map((item) => (
                     <option key={item.id} value={`${StudentPageScope.CLASS}:${item.id}`}>

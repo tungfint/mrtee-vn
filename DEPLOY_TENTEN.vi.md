@@ -73,21 +73,27 @@ Dung file:
 
 ```text
 tenten_class_members_migration.sql
+tenten_independent_student_pages_migration.sql
+tenten_student_contact_method_migration.sql
 ```
 
-File nay dung cho migration `20260530120000_class_members`: tao bang `ClassMember`, copy quan he lop cu tu `User.classId`, va ghi nhan migration vao `_prisma_migrations`.
+`tenten_class_members_migration.sql` dung cho migration `20260530120000_class_members`: tao bang `ClassMember`, copy quan he lop cu tu `User.classId`, va ghi nhan migration vao `_prisma_migrations`.
+
+`tenten_independent_student_pages_migration.sql` dung cho migration `20260530150000_independent_student_pages`: cho phep tao link hoc sinh doc lap, khong thuoc lop/doi tuyen.
+
+`tenten_student_contact_method_migration.sql` dung cho migration `20260530160000_student_contact_method`: them truong cach thuc lien lac trong ho so hoc sinh.
 
 Thao tac tren Tenten:
 
 1. Vao `phpMyAdmin`.
 2. Chon database `rbehtsy72q3o_mrtee_vn`.
 3. Tab `Import`.
-4. Chon file `tenten_class_members_migration.sql`.
+4. Chon file SQL migration can chay, vi du `tenten_independent_student_pages_migration.sql` cho ban cap nhat hoc sinh doc lap.
 5. `Character set of the file`: chon `utf-8`. Khong chon `utf-16`.
 6. Bam `Go`.
 7. Quay lai `Setup Node.js App` va bam `Restart`.
 
-Neu phpMyAdmin khong cho upload file, vao tab `SQL`, copy toan bo noi dung file `tenten_class_members_migration.sql`, dan vao va bam `Go`.
+Neu phpMyAdmin khong cho upload file, vao tab `SQL`, copy toan bo noi dung file SQL migration can chay, dan vao va bam `Go`.
 
 Chi import file SQL migration dung voi thay doi hien tai. Khong import lai file seed/demo SQL vao site dang co du lieu that.
 
@@ -105,8 +111,12 @@ Nen commit source code, migration, script, tai lieu va file SQL migration thu co
 
 ```text
 prisma/migrations/20260530120000_class_members/migration.sql
+prisma/migrations/20260530150000_independent_student_pages/migration.sql
+prisma/migrations/20260530160000_student_contact_method/migration.sql
 scripts/cpanel-migrate.mjs
 tenten_class_members_migration.sql
+tenten_independent_student_pages_migration.sql
+tenten_student_contact_method_migration.sql
 DEPLOY_TENTEN.vi.md
 LOCAL_SETUP.vi.md
 ```
@@ -193,3 +203,31 @@ node_modules/
 - Loi thieu Prisma runtime: goi `Web-MrTee-tenten-runtime.tar.gz` moi da chua san `.next/node_modules/@prisma` va `.next/node_modules/.prisma`.
 - Loi font tieng Viet trong DB: import lai SQL dung UTF-8, khong dung file cu bi mojibake.
 - `cagefs_enter: Unable to fork`: host cham gioi han tai nguyen, tranh chay build/migration nang tren host.
+
+## Khi host bao 100/100 process
+
+Web production binh thuong chi can 1 tien trinh Node chay `server.js`. Neu Tenten hien 100/100 process thi thuong khong phai do web dang co 100 nguoi truy cap, ma do mot trong cac thao tac tren host da sinh nhieu process hoac bi ket:
+
+- Chay `Run NPM Install` tren host.
+- Chay `Run JS Script` de migrate database.
+- Build Next.js tren host.
+- App bi restart/start nhieu lan khi tien trinh cu chua thoat.
+- Host CloudLinux/CageFS dem ca shell, npm, node, git, tar, phpMyAdmin va cac tien trinh con.
+
+Quy trinh deploy de tranh cham gioi han process:
+
+1. Build va package tren may local, khong build tren host.
+2. Tren Tenten, `Stop App` truoc khi upload/extract.
+3. Upload duy nhat `Web-MrTee-tenten-runtime.tar.gz`.
+4. Extract de len thu muc app.
+5. Khong bam `Run NPM Install` neu `package.json` khong doi dependencies.
+6. Chi bam `Start App`/`Restart App` mot lan, doi 30-60 giay.
+7. Neu can migrate DB ma `Run JS Script` loi process, dung phpMyAdmin import SQL thu cong.
+
+Neu da bi 100/100 process:
+
+1. `Stop App` trong `Setup Node.js App`.
+2. Doi 3-5 phut de CloudLinux tu giai phong process.
+3. Neu co `SSH Access`, dang nhap va kiem tra process bang `ps -u $USER -f`.
+4. Neu thay nhieu process `node`, `npm`, `next`, `prisma` cu bi ket, lien he Tenten nho kill process cua user hosting.
+5. Sau khi process ve thap, chi `Start App` lai mot lan.

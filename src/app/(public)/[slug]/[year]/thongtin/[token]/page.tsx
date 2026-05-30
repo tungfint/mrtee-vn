@@ -21,7 +21,7 @@ export default async function ClassStudentInfoPage({
   const studentPage = await prisma.studentPage.findFirst({
     include: {
       class: { select: { name: true, slug: true } },
-      studentProfile: true,
+      studentProfile: { include: { user: { select: { email: true } } } },
     },
     where: {
       class: { slug },
@@ -47,7 +47,9 @@ export default async function ClassStudentInfoPage({
         coverImage: profile.coverImage,
         customPhoto1: profile.customPhoto1,
         customPhoto2: profile.customPhoto2,
+        contactMethod: profile.contactMethod,
         dob: dateValue(profile.dob),
+        email: profile.user.email,
         fullName: profile.fullName,
         futureGoal: profile.futureGoal,
         hobbies: profile.hobbies,

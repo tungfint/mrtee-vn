@@ -34,7 +34,7 @@ export default async function TeamStudentInputPage({
 
   const studentPage = await prisma.studentPage.findFirst({
     include: {
-      studentProfile: true,
+      studentProfile: { include: { user: { select: { email: true } } } },
       team: { select: { category: true, year: true } },
     },
     where: {
@@ -64,7 +64,9 @@ export default async function TeamStudentInputPage({
         coverImage: profile.coverImage,
         customPhoto1: profile.customPhoto1,
         customPhoto2: profile.customPhoto2,
+        contactMethod: profile.contactMethod,
         dob: dateValue(profile.dob),
+        email: profile.user.email,
         fullName: profile.fullName,
         futureGoal: profile.futureGoal,
         hobbies: profile.hobbies,

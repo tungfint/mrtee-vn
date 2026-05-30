@@ -38,6 +38,16 @@ body {
   scrollbar-gutter: stable;
 }
 
+.gallery-grid-image {
+  height: clamp(180px, 48vw, 260px) !important;
+}
+
+@media (min-width: 640px) {
+  .gallery-grid-image {
+    height: auto !important;
+  }
+}
+
 .gallery-scroll::-webkit-scrollbar {
   height: 0.65rem;
   width: 0.65rem;

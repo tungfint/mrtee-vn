@@ -12,10 +12,12 @@ type StudentInputData = {
   avatar?: string | null;
   cityCountry?: string | null;
   company?: string | null;
+  contactMethod?: string | null;
   coverImage?: string | null;
   customPhoto1?: string | null;
   customPhoto2?: string | null;
   dob?: string;
+  email?: string | null;
   fullName: string;
   futureGoal?: string | null;
   hobbies?: string | null;
@@ -152,6 +154,9 @@ export function StudentInputForm({
             <Field label="Họ và tên">
               <input className={inputClass()} name="fullName" onChange={(event) => update("fullName", event.target.value)} required value={data.fullName} />
             </Field>
+            <Field label="Email">
+              <input className={inputClass()} name="email" onChange={(event) => update("email", event.target.value)} type="email" value={data.email ?? ""} />
+            </Field>
             <Field label="Nickname">
               <input className={inputClass()} name="nickname" onChange={(event) => update("nickname", event.target.value)} value={data.nickname ?? ""} />
             </Field>
@@ -177,6 +182,16 @@ export function StudentInputForm({
               <input className={inputClass()} name="company" onChange={(event) => update("company", event.target.value)} value={data.company ?? ""} />
             </Field>
           </section>
+
+          <Field label="Cách thức liên lạc">
+            <textarea
+              className={textareaClass()}
+              name="contactMethod"
+              onChange={(event) => update("contactMethod", event.target.value)}
+              placeholder="Ví dụ: Zalo 09..., Facebook..., email phụ, số điện thoại..."
+              value={data.contactMethod ?? ""}
+            />
+          </Field>
 
           <section className="grid gap-4 md:grid-cols-2">
             {[
@@ -258,9 +273,11 @@ export function StudentInputForm({
           <h2 className="mt-4 text-2xl font-semibold">{data.fullName || "Họ và tên"}</h2>
           {data.nickname ? <p className="mt-1 font-medium text-emerald-700">{data.nickname}</p> : null}
           <dl className="mt-4 grid gap-2 text-sm text-slate-600">
+            {data.email ? <div><dt className="font-semibold text-slate-900">Email</dt><dd>{data.email}</dd></div> : null}
             {data.cityCountry ? <div><dt className="font-semibold text-slate-900">Nơi ở</dt><dd>{data.cityCountry}</dd></div> : null}
             {data.workField ? <div><dt className="font-semibold text-slate-900">Lĩnh vực</dt><dd>{data.workField}</dd></div> : null}
             {data.company ? <div><dt className="font-semibold text-slate-900">Công ty</dt><dd>{data.company}</dd></div> : null}
+            {data.contactMethod ? <div><dt className="font-semibold text-slate-900">Liên lạc</dt><dd>{data.contactMethod}</dd></div> : null}
           </dl>
           <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
             <TextPreview content={data.yearbookMessage ?? ""} format={yearbookFormat} />

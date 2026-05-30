@@ -8,6 +8,22 @@ import { prisma } from "@/lib/prisma";
 import { uploadPublicImage } from "@/lib/uploads";
 import { slugifyVietnamese } from "@/lib/slugs";
 
+function studentPagePublicHref(studentPage: {
+  class?: { slug: string } | null;
+  studentSlug: string;
+  team?: { category: string; year: number } | null;
+}) {
+  if (studentPage.class?.slug) {
+    return `/${studentPage.class.slug}/${studentPage.studentSlug}`;
+  }
+
+  if (studentPage.team) {
+    return `/${studentPage.team.category.toLowerCase().replace("_", "-")}/${studentPage.team.year}/${studentPage.studentSlug}`;
+  }
+
+  return `/student/${studentPage.studentSlug}`;
+}
+
 function optional(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -39,6 +55,7 @@ export async function submitStudentInputAction(formData: FormData) {
   const studentPage = await prisma.studentPage.findUnique({
     include: {
       class: { select: { slug: true } },
+      studentProfile: { select: { user: { select: { email: true } }, userId: true } },
       team: { select: { category: true, year: true } },
     },
     where: { id: pageId },
@@ -49,6 +66,14 @@ export async function submitStudentInputAction(formData: FormData) {
   }
 
   const fullName = optional(formData, "fullName") ?? studentPage.fullNameSnapshot;
+  const email = optional(formData, "email")?.toLowerCase();
+
+  if (email && email !== studentPage.studentProfile.user.email.toLowerCase()) {
+    await prisma.user.update({
+      data: { email },
+      where: { id: studentPage.studentProfile.userId },
+    });
+  }
 
   await prisma.studentProfile.update({
     data: {
@@ -60,6 +85,7 @@ export async function submitStudentInputAction(formData: FormData) {
       fullName,
       cityCountry: optional(formData, "cityCountry"),
       company: optional(formData, "company"),
+      contactMethod: optional(formData, "contactMethod"),
       futureGoal: optional(formData, "futureGoal"),
       hobbies: optional(formData, "hobbies"),
       nickname: optional(formData, "nickname"),
@@ -79,10 +105,7 @@ export async function submitStudentInputAction(formData: FormData) {
     where: { id: studentPage.id },
   });
 
-  const publicHref =
-    studentPage.class?.slug
-      ? `/${studentPage.class.slug}/${studentPage.studentSlug}`
-      : `/${studentPage.team?.category.toLowerCase().replace("_", "-")}/${studentPage.team?.year}/${studentPage.studentSlug}`;
+  const publicHref = studentPagePublicHref(studentPage);
 
   revalidatePath(publicHref);
   revalidatePath("/", "layout");
@@ -145,10 +168,7 @@ export async function submitStudentArticleAction(formData: FormData) {
     });
   }
 
-  const publicHref =
-    studentPage.class?.slug
-      ? `/${studentPage.class.slug}/${studentPage.studentSlug}`
-      : `/${studentPage.team?.category.toLowerCase().replace("_", "-")}/${studentPage.team?.year}/${studentPage.studentSlug}`;
+  const publicHref = studentPagePublicHref(studentPage);
 
   revalidatePath(publicHref);
   revalidatePath("/", "layout");

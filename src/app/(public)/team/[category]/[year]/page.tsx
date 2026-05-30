@@ -205,9 +205,9 @@ export default async function TeamYearPage({
     team.backgroundImage ?? team.coverImage ?? team.cardBackgroundImage ?? fallbackHero;
   const albumItems = galleryItems(team, heroImage);
   const realMembers: CollectionMember[] = team.members.map((member) => ({
-    avatar: member.studentProfile.coverImage ?? member.studentProfile.avatar,
+    avatar: member.studentProfile.avatar ?? member.studentProfile.coverImage,
     backgroundPosition:
-      member.studentProfile.coverImageCrop ?? member.studentProfile.avatarCrop ?? "center",
+      member.studentProfile.avatarCrop ?? member.studentProfile.coverImageCrop ?? "center",
     id: member.studentProfile.id,
     name: member.studentProfile.fullName,
     nickname: member.studentProfile.nickname,

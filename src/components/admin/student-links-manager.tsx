@@ -15,7 +15,7 @@ export type StudentLinkRow = {
   id: string;
   infoHref: string;
   publicHref: string;
-  scope: "CLASS" | "TEAM";
+  scope: "CLASS" | "TEAM" | "INDEPENDENT";
   studentName: string;
   studentSlug: string;
   token: string;

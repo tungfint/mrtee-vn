@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { PublicAdminSectionEditButton } from "@/components/admin/public-admin-section-edit-button";
 import { AlbumShowcase, type PublicAlbum } from "@/components/content/album-showcase";
 import { MediaGallery, type GalleryMediaItem } from "@/components/content/media-gallery";
 import { MediaStrip } from "@/components/content/media-strip";
@@ -257,6 +258,7 @@ export function CollectionPage({
               <Camera aria-hidden className="h-6 w-6 text-emerald-700" />
               <h2 className="text-3xl font-semibold">{albumTitle}</h2>
             </div>
+            <PublicAdminSectionEditButton label="Sửa album ảnh" section="albums" />
             {albumExternalUrl ? (
               <a
                 className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:text-emerald-800"
@@ -279,14 +281,17 @@ export function CollectionPage({
 
       <section className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
-          <div className="mb-6 flex items-center gap-3">
-            <Camera aria-hidden className="h-6 w-6 text-emerald-700" />
-            <div>
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Camera aria-hidden className="h-6 w-6 text-emerald-700" />
+              <div>
               <p className="text-sm font-medium uppercase text-emerald-700">
                 {videoSectionEyebrow}
               </p>
               <h2 className="text-3xl font-semibold text-slate-950">{videoSectionTitle}</h2>
+              </div>
             </div>
+            <PublicAdminSectionEditButton label="Sửa video" section="videos" />
           </div>
           <AlbumShowcase
             albums={[
@@ -312,18 +317,21 @@ export function CollectionPage({
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {members.map((member) => (
-              <BackgroundCard
-                backgroundImage={member.avatar}
-                backgroundPosition={member.backgroundPosition}
-                className="min-h-80 p-5 shadow-xl shadow-slate-900/12"
+              <Link
+                className="group block h-full transition hover:-translate-y-0.5"
+                href={member.href ?? `/student/${member.id}`}
                 key={member.id}
-                overlayClassName="bg-gradient-to-t from-slate-950/12 via-transparent to-transparent"
-                showImageAction={Boolean(member.avatar)}
               >
-                <div className="flex min-h-64 flex-col justify-end">
-                  <Link
-                    className="rounded-lg bg-white/94 p-4 shadow-lg backdrop-blur transition hover:bg-emerald-50"
-                    href={member.href ?? `/student/${member.id}`}
+                <BackgroundCard
+                  backgroundImage={member.avatar}
+                  backgroundPosition={member.backgroundPosition}
+                  className="min-h-80 p-5 shadow-xl shadow-slate-900/12 group-hover:shadow-emerald-900/20"
+                  overlayClassName="bg-gradient-to-t from-slate-950/12 via-transparent to-transparent"
+                  showImageAction={false}
+                >
+                  <div className="flex min-h-64 flex-col justify-end">
+                    <div
+                      className="rounded-lg bg-white/94 p-4 shadow-lg backdrop-blur transition group-hover:bg-emerald-50"
                   >
                     {member.role ? (
                       <p className="text-xs font-semibold uppercase text-emerald-700">
@@ -336,9 +344,10 @@ export function CollectionPage({
                         {member.nickname}
                       </p>
                     ) : null}
-                  </Link>
-                </div>
-              </BackgroundCard>
+                    </div>
+                  </div>
+                </BackgroundCard>
+              </Link>
             ))}
           </div>
         </div>

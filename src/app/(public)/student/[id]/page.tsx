@@ -6,6 +6,7 @@ import {
   Heart,
   Sparkles,
 } from "lucide-react";
+import { StudentPageScope } from "@prisma/client";
 import Link from "next/link";
 
 import { MediaStrip } from "@/components/content/media-strip";
@@ -24,12 +25,14 @@ const fallbackStudent = {
   avatar: fallbackAvatar,
   cityCountry: "",
   company: "",
+  contactMethod: "",
   coverImage: fallbackAvatar,
   customPhoto1:
     "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
   customPhoto2:
     "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
   dob: "12/08/2008",
+  email: "",
   fullName: "Nguyễn Minh Anh",
   futureGoal: "Khoa học máy tính - Đại học Bách khoa",
   hobbies: "Thiết kế web, chụp ảnh, đọc truyện khoa học viễn tưởng",
@@ -94,6 +97,14 @@ function formatDate(value?: Date | null) {
 
 async function loadStudent(id: string) {
   try {
+    const studentPage = await prisma.studentPage.findFirst({
+      select: { studentProfileId: true },
+      where: {
+        scope: StudentPageScope.INDEPENDENT,
+        studentSlug: id,
+      },
+    });
+
     return await prisma.studentProfile.findFirst({
       include: {
         memoryPosts: {
@@ -104,7 +115,7 @@ async function loadStudent(id: string) {
         user: true,
       },
       where: {
-        OR: [{ id }, { userId: id }],
+        OR: [{ id }, { userId: id }, ...(studentPage ? [{ id: studentPage.studentProfileId }] : [])],
       },
     });
   } catch {
@@ -125,7 +136,9 @@ export default async function StudentProfilePage({
         coverImage: profile.coverImage ?? profile.avatar ?? fallbackAvatar,
         customPhoto1: profile.customPhoto1 ?? fallbackStudent.customPhoto1,
         customPhoto2: profile.customPhoto2 ?? fallbackStudent.customPhoto2,
+        contactMethod: profile.contactMethod ?? "",
         dob: formatDate(profile.dob),
+        email: profile.user.email,
         fullName: profile.fullName,
         cityCountry: profile.cityCountry ?? "",
         company: profile.company ?? "",
@@ -229,6 +242,18 @@ export default async function StudentProfilePage({
           <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-lg shadow-slate-900/5">
             <h2 className="text-xl font-semibold">Thông tin cơ bản</h2>
             <dl className="mt-5 space-y-4 text-sm">
+              {student.email ? (
+                <div className="flex gap-3">
+                  <BriefcaseBusiness
+                    aria-hidden
+                    className="mt-0.5 h-4 w-4 text-emerald-700"
+                  />
+                  <div>
+                    <dt className="text-slate-500">Email</dt>
+                    <dd className="font-medium">{student.email}</dd>
+                  </div>
+                </div>
+              ) : null}
               {student.dob ? (
                 <div className="flex gap-3">
                   <CalendarDays
@@ -312,6 +337,18 @@ export default async function StudentProfilePage({
                   <div>
                     <dt className="text-slate-500">Công ty đang làm</dt>
                     <dd className="font-medium">{student.company}</dd>
+                  </div>
+                </div>
+              ) : null}
+              {student.contactMethod ? (
+                <div className="flex gap-3">
+                  <BriefcaseBusiness
+                    aria-hidden
+                    className="mt-0.5 h-4 w-4 text-emerald-700"
+                  />
+                  <div>
+                    <dt className="text-slate-500">Cách thức liên lạc</dt>
+                    <dd className="font-medium whitespace-pre-line">{student.contactMethod}</dd>
                   </div>
                 </div>
               ) : null}

@@ -130,6 +130,7 @@ export default async function EditClassPage({
   const postEditor = (post: (typeof classroom.memoryPosts)[number]) => (
     <details
       className="overflow-hidden rounded-md border border-slate-200 bg-slate-50"
+      id={`post-${post.id}`}
       key={post.id}
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-semibold text-slate-800 hover:bg-slate-100">

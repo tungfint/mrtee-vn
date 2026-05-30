@@ -197,12 +197,12 @@ export default async function ClassPage({
         ),
       ].map((student) => ({
         avatar:
-          student.profile?.coverImage ??
           student.profile?.avatar ??
+          student.profile?.coverImage ??
           classroom.cardBackgroundImage ??
           fallbackHero,
         backgroundPosition:
-          student.profile?.coverImageCrop ?? student.profile?.avatarCrop ?? "center",
+          student.profile?.avatarCrop ?? student.profile?.coverImageCrop ?? "center",
         id: student.profile?.id ?? student.id,
         name: student.profile?.fullName ?? student.name ?? student.email,
         nickname: student.profile?.nickname ?? "",

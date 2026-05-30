@@ -69,9 +69,13 @@ function parseStudentImportLines(value: string) {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const [namePart, slugPart, emailPart] = line.split("|").map((part) => part.trim());
+      const [namePart, secondPart, thirdPart] = line.split("|").map((part) => part.trim());
+      const secondPartIsEmail = Boolean(secondPart?.includes("@"));
+      const email = (secondPartIsEmail ? secondPart : thirdPart)?.toLowerCase() || null;
+      const slugPart = secondPartIsEmail ? null : secondPart;
+
       return {
-        email: emailPart?.toLowerCase() || null,
+        email,
         fullName: namePart,
         slug: slugPart ? slugifyVietnamese(slugPart) : slugifyVietnamese(namePart),
       };
@@ -82,19 +86,28 @@ function parseStudentImportLines(value: string) {
 async function uniqueStudentSlug({
   baseSlug,
   classId,
+  excludeId,
+  scope,
   teamId,
 }: {
   baseSlug: string;
   classId?: string | null;
+  excludeId?: string | null;
+  scope?: StudentPageScope;
   teamId?: string | null;
 }) {
   let candidate = baseSlug;
-  let suffix = 1;
+  let suffix = 0;
 
   while (
     await prisma.studentPage.findFirst({
       select: { id: true },
-      where: classId ? { classId, studentSlug: candidate } : { teamId, studentSlug: candidate },
+      where:
+        scope === StudentPageScope.INDEPENDENT
+          ? { id: excludeId ? { not: excludeId } : undefined, scope: StudentPageScope.INDEPENDENT, studentSlug: candidate }
+          : classId
+            ? { classId, id: excludeId ? { not: excludeId } : undefined, studentSlug: candidate }
+            : { id: excludeId ? { not: excludeId } : undefined, teamId, studentSlug: candidate },
     })
   ) {
     suffix += 1;
@@ -648,6 +661,8 @@ export async function importStudentPagesAction(formData: FormData) {
 
     teamId = team.id;
     contextSlug = `${team.category.toLowerCase().replace("_", "-")}-${team.year}`;
+  } else if (scope === StudentPageScope.INDEPENDENT) {
+    contextSlug = "independent";
   } else {
     actionFailed(path, "Ngữ cảnh import không hợp lệ.");
   }
@@ -656,12 +671,7 @@ export async function importStudentPagesAction(formData: FormData) {
   const passwordHash = await hash("Mrtee@2026", 12);
 
   for (const student of students) {
-    const studentSlug = await uniqueStudentSlug({
-      baseSlug: student.slug,
-      classId,
-      teamId,
-    });
-    const email = student.email ?? studentEmailFromSlug(contextSlug, studentSlug);
+    const email = student.email ?? studentEmailFromSlug(contextSlug, student.slug);
     let profile = await findStudentProfileByImportIdentity(student.fullName, student.email);
 
     if (!profile) {
@@ -716,17 +726,25 @@ export async function importStudentPagesAction(formData: FormData) {
     }
 
     const existingPage = await prisma.studentPage.findFirst({
-      select: { id: true },
+      select: { id: true, studentSlug: true },
       where: {
         classId: classId ?? undefined,
+        scope: scope as StudentPageScope,
         studentProfileId: profile.id,
         teamId: teamId ?? undefined,
       },
     });
+    const studentSlug = await uniqueStudentSlug({
+      baseSlug: student.slug,
+      classId,
+      excludeId: existingPage?.id,
+      scope: scope as StudentPageScope,
+      teamId,
+    });
 
     if (existingPage) {
       await prisma.studentPage.update({
-        data: { fullNameSnapshot: student.fullName },
+        data: { fullNameSnapshot: student.fullName, studentSlug },
         where: { id: existingPage.id },
       });
     } else {

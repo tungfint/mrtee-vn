@@ -1,0 +1,2 @@
+ALTER TABLE `studentpage`
+  MODIFY `scope` ENUM('CLASS', 'TEAM', 'INDEPENDENT') NOT NULL;
