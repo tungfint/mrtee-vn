@@ -1,6 +1,7 @@
--- WEB-MRTEE manual migration for Tenten/phpMyAdmin.
--- Use this only when cPanel "Run JS Script" fails with cagefs/resource-limit errors.
--- It creates ClassMember so one student profile can belong to multiple classes.
+-- WEB-MRTEE manual migrations for Tenten/phpMyAdmin.
+-- Use this when cPanel "Run JS Script" fails with cagefs/resource-limit errors.
+-- This file combines the DB changes needed after the first production import.
+-- Character set when importing: utf-8.
 
 CREATE TABLE IF NOT EXISTS `ClassMember` (
   `id` VARCHAR(191) NOT NULL,
@@ -37,4 +38,42 @@ SELECT
 WHERE NOT EXISTS (
   SELECT 1 FROM `_prisma_migrations`
   WHERE `migration_name` = '20260530120000_class_members'
+);
+
+ALTER TABLE `StudentPage`
+  MODIFY `scope` ENUM('CLASS', 'TEAM', 'INDEPENDENT') NOT NULL;
+
+INSERT INTO `_prisma_migrations`
+  (`id`, `checksum`, `finished_at`, `migration_name`, `logs`, `rolled_back_at`, `started_at`, `applied_steps_count`)
+SELECT
+  UUID(),
+  '3cee0f930a2cabe197bae03d1a7db4b4dab609f2925954544ac184f50827bf6e',
+  CURRENT_TIMESTAMP(3),
+  '20260530150000_independent_student_pages',
+  NULL,
+  NULL,
+  CURRENT_TIMESTAMP(3),
+  1
+WHERE NOT EXISTS (
+  SELECT 1 FROM `_prisma_migrations`
+  WHERE `migration_name` = '20260530150000_independent_student_pages'
+);
+
+ALTER TABLE `StudentProfile`
+  ADD COLUMN IF NOT EXISTS `contactMethod` TEXT NULL;
+
+INSERT INTO `_prisma_migrations`
+  (`id`, `checksum`, `finished_at`, `migration_name`, `logs`, `rolled_back_at`, `started_at`, `applied_steps_count`)
+SELECT
+  UUID(),
+  '958f248e91f916bb2ac045c1502c1fb3a778df4d7374bad398fbab4cfa15b944',
+  CURRENT_TIMESTAMP(3),
+  '20260530160000_student_contact_method',
+  NULL,
+  NULL,
+  CURRENT_TIMESTAMP(3),
+  1
+WHERE NOT EXISTS (
+  SELECT 1 FROM `_prisma_migrations`
+  WHERE `migration_name` = '20260530160000_student_contact_method'
 );

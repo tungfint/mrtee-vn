@@ -69,31 +69,29 @@ Dung cach 2: import SQL thu cong bang phpMyAdmin.
 
 ### Cap nhat database bang phpMyAdmin khi Run JS Script loi
 
-Dung file:
+Nen dung file tong hop nay cho gon:
 
 ```text
-tenten_class_members_migration.sql
-tenten_independent_student_pages_migration.sql
-tenten_student_contact_method_migration.sql
+tenten_all_migrations.sql
 ```
 
-`tenten_class_members_migration.sql` dung cho migration `20260530120000_class_members`: tao bang `ClassMember`, copy quan he lop cu tu `User.classId`, va ghi nhan migration vao `_prisma_migrations`.
+File nay gom cac migration can thiet sau lan import production dau tien:
 
-`tenten_independent_student_pages_migration.sql` dung cho migration `20260530150000_independent_student_pages`: cho phep tao link hoc sinh doc lap, khong thuoc lop/doi tuyen.
-
-`tenten_student_contact_method_migration.sql` dung cho migration `20260530160000_student_contact_method`: them truong cach thuc lien lac trong ho so hoc sinh.
+- `20260530120000_class_members`: tao bang `ClassMember`, cho phep mot hoc sinh thuoc nhieu lop/doi tuyen.
+- `20260530150000_independent_student_pages`: cho phep tao link hoc sinh doc lap, khong thuoc lop/doi tuyen.
+- `20260530160000_student_contact_method`: them truong cach thuc lien lac trong ho so hoc sinh.
 
 Thao tac tren Tenten:
 
 1. Vao `phpMyAdmin`.
 2. Chon database `rbehtsy72q3o_mrtee_vn`.
 3. Tab `Import`.
-4. Chon file SQL migration can chay, vi du `tenten_independent_student_pages_migration.sql` cho ban cap nhat hoc sinh doc lap.
+4. Chon file `tenten_all_migrations.sql`.
 5. `Character set of the file`: chon `utf-8`. Khong chon `utf-16`.
 6. Bam `Go`.
 7. Quay lai `Setup Node.js App` va bam `Restart`.
 
-Neu phpMyAdmin khong cho upload file, vao tab `SQL`, copy toan bo noi dung file SQL migration can chay, dan vao va bam `Go`.
+Neu phpMyAdmin khong cho upload file, vao tab `SQL`, copy toan bo noi dung file `tenten_all_migrations.sql`, dan vao va bam `Go`.
 
 Chi import file SQL migration dung voi thay doi hien tai. Khong import lai file seed/demo SQL vao site dang co du lieu that.
 
@@ -114,9 +112,7 @@ prisma/migrations/20260530120000_class_members/migration.sql
 prisma/migrations/20260530150000_independent_student_pages/migration.sql
 prisma/migrations/20260530160000_student_contact_method/migration.sql
 scripts/cpanel-migrate.mjs
-tenten_class_members_migration.sql
-tenten_independent_student_pages_migration.sql
-tenten_student_contact_method_migration.sql
+tenten_all_migrations.sql
 DEPLOY_TENTEN.vi.md
 LOCAL_SETUP.vi.md
 ```
