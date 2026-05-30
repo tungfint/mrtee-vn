@@ -2,7 +2,11 @@
 
 import { useMemo, useState, useTransition } from "react";
 
-import { regenerateStudentPageTokenAction } from "@/app/(dashboard)/dashboard/admin/actions";
+import {
+  deleteStudentProfilesAction,
+  deleteStudentPagesAction,
+  regenerateStudentPageTokenAction,
+} from "@/app/(dashboard)/dashboard/admin/actions";
 
 export type StudentLinkRow = {
   articleHref: string;
@@ -65,6 +69,7 @@ export function StudentLinksManager({
 }) {
   const [query, setQuery] = useState("");
   const [contextId, setContextId] = useState("all");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const filteredRows = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -88,6 +93,21 @@ export function StudentLinksManager({
       return matchesContext && matchesQuery;
     });
   }, [contextId, query, rows]);
+
+  const filteredIds = filteredRows.map((row) => row.id);
+  const selectedVisibleCount = filteredIds.filter((id) => selectedIds.includes(id)).length;
+
+  function toggleSelected(id: string, checked: boolean) {
+    setSelectedIds((current) =>
+      checked
+        ? Array.from(new Set([...current, id]))
+        : current.filter((item) => item !== id),
+    );
+  }
+
+  function selectVisibleRows() {
+    setSelectedIds((current) => Array.from(new Set([...current, ...filteredIds])));
+  }
 
   function exportCsv() {
     const header = [
@@ -159,15 +179,89 @@ export function StudentLinksManager({
         Đang hiển thị {filteredRows.length}/{rows.length} học sinh. Link thông tin và link bài viết dùng chung token.
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        <span className="font-medium">Đã chọn {selectedIds.length} link.</span>
+        <button
+          className="rounded-md border border-amber-300 bg-white px-3 py-2 font-medium hover:bg-amber-100"
+          onClick={selectVisibleRows}
+          type="button"
+        >
+          Chọn tất cả đang lọc ({filteredRows.length})
+        </button>
+        <button
+          className="rounded-md border border-slate-300 bg-white px-3 py-2 font-medium text-slate-700 hover:bg-slate-100"
+          onClick={() => setSelectedIds([])}
+          type="button"
+        >
+          Bỏ chọn
+        </button>
+        <form
+          action={deleteStudentPagesAction}
+          onSubmit={(event) => {
+            if (!selectedIds.length) {
+              event.preventDefault();
+              return;
+            }
+
+            if (!window.confirm(`Gỡ ${selectedIds.length} mục đã chọn khỏi lớp/đội tương ứng? Hồ sơ gốc vẫn được giữ lại.`)) {
+              event.preventDefault();
+            }
+          }}
+        >
+          <input name="studentPageIds" type="hidden" value={JSON.stringify(selectedIds)} />
+          <button
+            className="rounded-md border border-rose-300 bg-white px-3 py-2 font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={!selectedIds.length}
+            type="submit"
+          >
+            Gỡ khỏi lớp/đội
+          </button>
+        </form>
+        <form
+          action={deleteStudentProfilesAction}
+          onSubmit={(event) => {
+            if (!selectedIds.length) {
+              event.preventDefault();
+              return;
+            }
+
+            if (!window.confirm(`XÓA SẠCH ${selectedIds.length} mục đã chọn? Thao tác này sẽ xóa tài khoản, hồ sơ, link, bài viết và liên kết lớp/đội của học sinh. Không thể hoàn tác.`)) {
+              event.preventDefault();
+            }
+          }}
+        >
+          <input name="studentPageIds" type="hidden" value={JSON.stringify(selectedIds)} />
+          <button
+            className="rounded-md bg-rose-700 px-3 py-2 font-medium text-white hover:bg-rose-800 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={!selectedIds.length}
+            type="submit"
+          >
+            Xóa sạch hồ sơ/tài khoản
+          </button>
+        </form>
+        {selectedVisibleCount ? (
+          <span className="text-xs text-amber-800">{selectedVisibleCount} link đang chọn nằm trong bộ lọc hiện tại.</span>
+        ) : null}
+      </div>
+
       <div className="grid gap-3">
         {filteredRows.length ? (
           filteredRows.map((row) => (
             <div className="rounded-md border border-slate-200 bg-slate-50 p-4" key={row.id}>
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+                <div className="flex min-w-0 gap-3">
+                  <input
+                    aria-label={`Chọn ${row.studentName}`}
+                    checked={selectedIds.includes(row.id)}
+                    className="mt-1 h-4 w-4 shrink-0"
+                    onChange={(event) => toggleSelected(row.id, event.target.checked)}
+                    type="checkbox"
+                  />
+                  <div className="min-w-0">
                   <h3 className="font-semibold">{row.studentName}</h3>
                   <p className="mt-1 text-sm text-slate-500">{row.contextLabel}</p>
                   <p className="mt-1 font-code text-xs text-slate-500">token: {row.token}</p>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-sm">
                   <a className="rounded-md border border-slate-300 bg-white px-3 py-2 font-medium text-slate-700 hover:bg-slate-100" href={row.publicHref} rel="noreferrer" target="_blank">

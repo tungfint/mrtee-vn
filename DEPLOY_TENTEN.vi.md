@@ -46,7 +46,9 @@ Neu chi sua file trong `src`, `public`, CSS, component, page thi khong can.
 
 Neu sua `prisma/schema.prisma` va tao migration moi, can cap nhat database.
 
-Voi cac ban deploy sau khi website da co du lieu that, khong chay seed lai. Trong `Setup Node.js App`, bam `Run JS Script` va chay:
+Voi cac ban deploy sau khi website da co du lieu that, khong chay seed lai.
+
+Thu cach 1 truoc: trong `Setup Node.js App`, bam `Run JS Script` va chay:
 
 ```text
 scripts/cpanel-migrate.mjs
@@ -54,7 +56,40 @@ scripts/cpanel-migrate.mjs
 
 Sau khi script bao xong, bam `Restart` app.
 
-Do host hien bi gioi han khi chay Prisma qua `Run JS Script`, cach on dinh hon la tao/import SQL qua phpMyAdmin.
+Neu `Run JS Script` bao loi dang nay:
+
+```text
+The received data is wrong. Contact support for resolution.
+cagefs_enter: Unable to fork
+resource limits / PMEM / number of processes
+```
+
+thi host dang cham gioi han RAM/process cua CloudLinux/CageFS. Khong co gang chay lai nhieu lan.
+Dung cach 2: import SQL thu cong bang phpMyAdmin.
+
+### Cap nhat database bang phpMyAdmin khi Run JS Script loi
+
+Dung file:
+
+```text
+tenten_class_members_migration.sql
+```
+
+File nay dung cho migration `20260530120000_class_members`: tao bang `ClassMember`, copy quan he lop cu tu `User.classId`, va ghi nhan migration vao `_prisma_migrations`.
+
+Thao tac tren Tenten:
+
+1. Vao `phpMyAdmin`.
+2. Chon database `rbehtsy72q3o_mrtee_vn`.
+3. Tab `Import`.
+4. Chon file `tenten_class_members_migration.sql`.
+5. `Character set of the file`: chon `utf-8`. Khong chon `utf-16`.
+6. Bam `Go`.
+7. Quay lai `Setup Node.js App` va bam `Restart`.
+
+Neu phpMyAdmin khong cho upload file, vao tab `SQL`, copy toan bo noi dung file `tenten_class_members_migration.sql`, dan vao va bam `Go`.
+
+Chi import file SQL migration dung voi thay doi hien tai. Khong import lai file seed/demo SQL vao site dang co du lieu that.
 
 Lan dau da dung file:
 
@@ -63,6 +98,26 @@ mrtee_tenten_import_utf8_case_correct.sql
 ```
 
 Khong import lai file seed SQL vao site dang co du lieu that, vi no co the ghi de/xoa du lieu tren host.
+
+## File nao can commit len Git?
+
+Nen commit source code, migration, script, tai lieu va file SQL migration thu cong:
+
+```text
+prisma/migrations/20260530120000_class_members/migration.sql
+scripts/cpanel-migrate.mjs
+tenten_class_members_migration.sql
+DEPLOY_TENTEN.vi.md
+LOCAL_SETUP.vi.md
+```
+
+Khong commit cac file package deploy vi chung duoc tao lai tu lenh `npm run deploy:package`:
+
+```text
+Web-MrTee-tenten-runtime.tar.gz
+Web-MrTee-tenten.tar.gz
+Web-MrTee-tenten.zip
+```
 
 ## Tao lai SQL seed/import neu can reset database
 

@@ -762,6 +762,108 @@ export async function regenerateStudentPageTokenAction(formData: FormData) {
   actionCompleted("/dashboard/admin/students", "Đã tạo link mới cho học sinh.");
 }
 
+export async function deleteStudentPagesAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/students";
+
+  let pageIds: string[] = [];
+
+  try {
+    const parsed = JSON.parse(required(formData, "studentPageIds"));
+    pageIds = Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+      : [];
+  } catch {
+    actionFailed(path, "Danh sách link học sinh cần xóa không hợp lệ.");
+  }
+
+  if (!pageIds.length) {
+    actionFailed(path, "Chưa chọn link học sinh nào để xóa.");
+  }
+
+  try {
+    const pages = await prisma.studentPage.findMany({
+      select: {
+        classId: true,
+        id: true,
+        studentProfileId: true,
+        teamId: true,
+      },
+      where: { id: { in: pageIds } },
+    });
+
+    await prisma.$transaction([
+      prisma.studentPage.deleteMany({ where: { id: { in: pages.map((page) => page.id) } } }),
+      ...pages
+        .filter((page) => page.classId)
+        .map((page) =>
+          prisma.classMember.deleteMany({
+            where: {
+              classId: page.classId!,
+              studentProfileId: page.studentProfileId,
+            },
+          }),
+        ),
+      ...pages
+        .filter((page) => page.teamId)
+        .map((page) =>
+          prisma.teamMember.deleteMany({
+            where: {
+              studentProfileId: page.studentProfileId,
+              teamId: page.teamId!,
+            },
+          }),
+        ),
+    ]);
+  } catch (error) {
+    actionFailed(path, "Không thể xóa các link học sinh đã chọn.", error);
+  }
+
+  actionCompleted(path, `Đã xóa ${pageIds.length} link học sinh đã chọn. Hồ sơ gốc vẫn được giữ lại.`);
+}
+
+export async function deleteStudentProfilesAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/students";
+
+  let pageIds: string[] = [];
+
+  try {
+    const parsed = JSON.parse(required(formData, "studentPageIds"));
+    pageIds = Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+      : [];
+  } catch {
+    actionFailed(path, "Danh sách học sinh cần xóa không hợp lệ.");
+  }
+
+  if (!pageIds.length) {
+    actionFailed(path, "Chưa chọn học sinh nào để xóa sạch.");
+  }
+
+  try {
+    const pages = await prisma.studentPage.findMany({
+      select: {
+        studentProfile: { select: { userId: true } },
+      },
+      where: { id: { in: pageIds } },
+    });
+    const userIds = Array.from(new Set(pages.map((page) => page.studentProfile.userId)));
+
+    if (!userIds.length) {
+      actionFailed(path, "Không tìm thấy hồ sơ học sinh tương ứng để xóa.");
+    }
+
+    await prisma.user.deleteMany({
+      where: { id: { in: userIds } },
+    });
+  } catch (error) {
+    actionFailed(path, "Không thể xóa sạch các hồ sơ học sinh đã chọn.", error);
+  }
+
+  actionCompleted(path, `Đã xóa sạch ${pageIds.length} mục đã chọn khỏi hệ thống.`);
+}
+
 export async function importClassMembersAction(formData: FormData) {
   await requireAdmin();
 
