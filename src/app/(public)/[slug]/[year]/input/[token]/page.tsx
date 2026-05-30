@@ -42,6 +42,8 @@ export default async function ClassStudentInputPage({
       contextLabel={`Lớp ${studentPage.class.name}`}
       initialData={{
         avatar: profile.avatar,
+        cityCountry: profile.cityCountry,
+        company: profile.company,
         coverImage: profile.coverImage,
         customPhoto1: profile.customPhoto1,
         customPhoto2: profile.customPhoto2,
@@ -54,6 +56,8 @@ export default async function ClassStudentInputPage({
         postGraduateWork: profile.postGraduateWork,
         school: profile.school,
         university: profile.university,
+        workField: profile.workField,
+        yearbookFormat: profile.yearbookFormat,
         yearbookMessage: profile.yearbookMessage,
       }}
       pageId={studentPage.id}

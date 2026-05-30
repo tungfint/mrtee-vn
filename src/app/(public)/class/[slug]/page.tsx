@@ -147,6 +147,14 @@ async function loadClass(slug: string) {
           include: { profile: true },
           orderBy: { name: "asc" },
         },
+        members: {
+          include: {
+            studentProfile: {
+              include: { user: { include: { profile: true } } },
+            },
+          },
+          orderBy: { createdAt: "asc" },
+        },
         studentPages: {
           select: {
             studentProfileId: true,
@@ -181,7 +189,13 @@ export default async function ClassPage({
     ...fallbackStories(className),
   ].slice(0, 4);
   const realStudents: CollectionMember[] = classroom
-    ? classroom.students.map((student) => ({
+    ? [
+        ...classroom.members.map((member) => member.studentProfile.user),
+        ...classroom.students.filter(
+          (student) =>
+            !classroom.members.some((member) => member.studentProfile.userId === student.id),
+        ),
+      ].map((student) => ({
         avatar:
           student.profile?.coverImage ??
           student.profile?.avatar ??

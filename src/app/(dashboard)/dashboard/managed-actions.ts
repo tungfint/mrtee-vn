@@ -48,6 +48,21 @@ function optionalStudentProfileId(formData: FormData) {
   return studentProfileId === "none" ? null : studentProfileId;
 }
 
+async function ensureClassMembership(studentProfileId: string, classId?: string | null) {
+  if (!classId) return;
+
+  await prisma.classMember.upsert({
+    create: { classId, studentProfileId },
+    update: {},
+    where: {
+      classId_studentProfileId: {
+        classId,
+        studentProfileId,
+      },
+    },
+  });
+}
+
 async function optionalImage(formData: FormData, key: string) {
   const file = formData.get(`${key}File`);
 
@@ -276,7 +291,8 @@ export async function createManagedClassStudentAction(formData: FormData) {
   const password = optional(formData, "password") ?? "Mrtee@2026";
 
   try {
-    await prisma.user.create({
+    const user = await prisma.user.create({
+      include: { profile: true },
       data: {
         classId,
         email,
@@ -294,11 +310,38 @@ export async function createManagedClassStudentAction(formData: FormData) {
         },
       },
     });
+
+    if (user.profile) {
+      await ensureClassMembership(user.profile.id, classId);
+    }
   } catch (error) {
     actionFailed(path, "Không thể thêm thành viên. Email có thể đã tồn tại.", error);
   }
 
   actionCompleted(path, "Đã thêm thành viên vào lớp.");
+}
+
+export async function addManagedClassMemberAction(formData: FormData) {
+  const classId = required(formData, "classId");
+  await requireClassEditor(classId);
+  const path = `/dashboard/classes/${classId}/edit`;
+
+  try {
+    const studentProfileId = required(formData, "studentProfileId");
+    await ensureClassMembership(studentProfileId, classId);
+
+    await prisma.user.updateMany({
+      data: { classId },
+      where: {
+        classId: null,
+        profile: { id: studentProfileId },
+      },
+    });
+  } catch (error) {
+    actionFailed(path, "KhÃ´ng thá»ƒ gáº¯n há»“ sÆ¡ há»c sinh vÃ o lá»›p.", error);
+  }
+
+  actionCompleted(path, "ÄÃ£ gáº¯n há»“ sÆ¡ há»c sinh vÃ o lá»›p.");
 }
 
 export async function updateManagedClassStudentAction(formData: FormData) {
@@ -309,11 +352,25 @@ export async function updateManagedClassStudentAction(formData: FormData) {
   const userId = required(formData, "userId");
   const fullName = required(formData, "fullName");
   const targetUser = await prisma.user.findUnique({
-    select: { classId: true },
+    select: {
+      classId: true,
+      profile: { select: { id: true } },
+    },
     where: { id: userId },
   });
+  const classMember = targetUser?.profile
+    ? await prisma.classMember.findUnique({
+        select: { id: true },
+        where: {
+          classId_studentProfileId: {
+            classId,
+            studentProfileId: targetUser.profile.id,
+          },
+        },
+      })
+    : null;
 
-  if (targetUser?.classId !== classId) {
+  if (targetUser?.classId !== classId && !classMember) {
     actionFailed(path, "Thành viên này không còn thuộc lớp.");
   }
 
@@ -545,10 +602,21 @@ export async function removeManagedClassStudentAction(formData: FormData) {
   const path = `/dashboard/classes/${classId}/edit`;
 
   try {
+    const user = await prisma.user.findUnique({
+      select: { profile: { select: { id: true } } },
+      where: { id: required(formData, "userId") },
+    });
+
     await prisma.user.updateMany({
       data: { classId: null },
       where: { classId, id: required(formData, "userId") },
     });
+
+    if (user?.profile) {
+      await prisma.classMember.deleteMany({
+        where: { classId, studentProfileId: user.profile.id },
+      });
+    }
   } catch (error) {
     actionFailed(path, "Không thể xóa thành viên khỏi lớp.", error);
   }
@@ -627,6 +695,7 @@ export async function updateManagedTeamMemberAction(formData: FormData) {
 
   const memberId = required(formData, "memberId");
   const fullName = required(formData, "fullName");
+  const classId = optionalClassId(formData);
   const member = await prisma.teamMember.findFirst({
     include: {
       studentProfile: { select: { userId: true } },
@@ -647,7 +716,7 @@ export async function updateManagedTeamMemberAction(formData: FormData) {
     await prisma.user.update({
     data: {
       ...(session.user.role === Role.ADMIN
-        ? { classId: optionalClassId(formData) }
+        ? { classId }
         : {}),
       email: required(formData, "email").toLowerCase(),
       name: fullName,
@@ -677,6 +746,10 @@ export async function updateManagedTeamMemberAction(formData: FormData) {
     },
     where: { id: member.studentProfile.userId },
     });
+
+    if (session.user.role === Role.ADMIN) {
+      await ensureClassMembership(member.studentProfileId, classId);
+    }
   } catch (error) {
     actionFailed(path, "Không thể lưu thành viên đội tuyển. Hãy kiểm tra ảnh và dữ liệu nhập.", error);
   }

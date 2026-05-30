@@ -91,6 +91,7 @@ model Class {
   monitorId   String?      @unique
   monitor     User?        @relation("ClassMonitor", fields: [monitorId], references: [id], onDelete: SetNull)
   students    User[]       @relation("ClassStudents")
+  members     ClassMember[]
   albums      Album[]
   memoryPosts MemoryPost[]
   studentPages StudentPage[]
@@ -130,10 +131,11 @@ model StudentProfile {
   yearbookMessage  String?   @db.Text
   yearbookFormat   ContentFormat @default(MARKDOWN)
 
-  teamMemberships TeamMember[]
-  memoryPosts     MemoryPost[]
-  yearRecords     StudentYearRecord[]
-  pages           StudentPage[]
+  teamMemberships  TeamMember[]
+  classMemberships ClassMember[]
+  memoryPosts      MemoryPost[]
+  yearRecords      StudentYearRecord[]
+  pages            StudentPage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -221,6 +223,21 @@ model StudentPage {
   @@unique([classId, studentSlug])
   @@unique([teamId, studentSlug])
   @@index([scope])
+  @@index([studentProfileId])
+}
+
+model ClassMember {
+  id               String  @id @default(cuid())
+  classId          String
+  studentProfileId String
+  role             String?
+
+  class          Class          @relation(fields: [classId], references: [id], onDelete: Cascade)
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([classId, studentProfileId])
   @@index([studentProfileId])
 }
 

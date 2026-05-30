@@ -46,6 +46,14 @@ Neu chi sua file trong `src`, `public`, CSS, component, page thi khong can.
 
 Neu sua `prisma/schema.prisma` va tao migration moi, can cap nhat database.
 
+Voi cac ban deploy sau khi website da co du lieu that, khong chay seed lai. Trong `Setup Node.js App`, bam `Run JS Script` va chay:
+
+```text
+scripts/cpanel-migrate.mjs
+```
+
+Sau khi script bao xong, bam `Restart` app.
+
 Do host hien bi gioi han khi chay Prisma qua `Run JS Script`, cach on dinh hon la tao/import SQL qua phpMyAdmin.
 
 Lan dau da dung file:

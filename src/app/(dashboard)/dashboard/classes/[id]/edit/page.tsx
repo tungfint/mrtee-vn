@@ -26,6 +26,7 @@ import {
 } from "../../../admin/actions";
 import {
   createManagedClassAlbumAction,
+  addManagedClassMemberAction,
   createManagedClassPostAction,
   createManagedClassStudentAction,
   deleteManagedClassAlbumAction,
@@ -58,7 +59,7 @@ export default async function EditClassPage({
 
   const { id } = await params;
   const feedback = await searchParams;
-  const [classroom, monitorUsers, playlists] = await Promise.all([
+  const [classroom, studentProfiles, monitorUsers, playlists] = await Promise.all([
     prisma.class.findFirst({
       include: {
         albums: {
@@ -73,10 +74,22 @@ export default async function EditClassPage({
           include: { profile: true },
           orderBy: { name: "asc" },
         },
+        members: {
+          include: {
+            studentProfile: {
+              include: { user: { include: { profile: true } } },
+            },
+          },
+          orderBy: { createdAt: "asc" },
+        },
       },
       where: {
         OR: [{ id }, { slug: id }],
       },
+    }),
+    prisma.studentProfile.findMany({
+      include: { user: { select: { email: true } } },
+      orderBy: { fullName: "asc" },
     }),
     session.user.role === Role.ADMIN
       ? prisma.user.findMany({
@@ -93,6 +106,19 @@ export default async function EditClassPage({
   if (!classroom || !canEditClass(session.user, classroom)) {
     redirect("/dashboard");
   }
+
+  const memberUserIds = new Set(
+    classroom.members.map((member) => member.studentProfile.user.id),
+  );
+  const classStudents = [
+    ...classroom.members.map((member) => member.studentProfile.user),
+    ...classroom.students.filter((student) => !memberUserIds.has(student.id)),
+  ].sort((left, right) =>
+    (left.profile?.fullName ?? left.name ?? left.email).localeCompare(
+      right.profile?.fullName ?? right.name ?? right.email,
+      "vi",
+    ),
+  );
 
   const introductionPosts = classroom.memoryPosts.filter(
     (post) => post.type === MemoryPostType.CLASS_INTRO,
@@ -162,7 +188,7 @@ export default async function EditClassPage({
             name="studentProfileId"
           >
             <option value="none">Bài chung của lớp</option>
-            {classroom.students
+            {classStudents
               .filter((student) => student.profile)
               .map((student) => (
                 <option key={student.profile!.id} value={student.profile!.id}>
@@ -524,7 +550,7 @@ export default async function EditClassPage({
               <Field label="Tác giả / học sinh liên quan">
                 <select className={selectClass} defaultValue="none" name="studentProfileId">
                   <option value="none">Bài chung của lớp</option>
-                  {classroom.students
+                  {classStudents
                     .filter((student) => student.profile)
                     .map((student) => (
                       <option key={student.profile!.id} value={student.profile!.id}>
@@ -605,6 +631,28 @@ export default async function EditClassPage({
           </div>
 
           <form
+            action={addManagedClassMemberAction}
+            className="mb-4 grid gap-3 rounded-md border border-emerald-200 bg-emerald-50/60 p-4 md:grid-cols-[1fr_auto]"
+          >
+            <input name="classId" type="hidden" value={classroom.id} />
+            <select className={selectClass} name="studentProfileId" required>
+              {studentProfiles
+                .filter((profile) => !classroom.members.some((member) => member.studentProfileId === profile.id))
+                .map((profile) => (
+                  <option key={profile.id} value={profile.id}>
+                    {profile.fullName} · {profile.user.email}
+                  </option>
+                ))}
+            </select>
+            <button
+              className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+              type="submit"
+            >
+              Gắn hồ sơ đã có
+            </button>
+          </form>
+
+          <form
             action={createManagedClassStudentAction}
             className="mb-6 rounded-md border border-slate-200 bg-slate-50 p-4"
           >
@@ -643,7 +691,7 @@ export default async function EditClassPage({
           </form>
 
           <div className="grid gap-4">
-            {classroom.students.map((student) => (
+            {classStudents.map((student) => (
               <details
                 className="overflow-hidden rounded-md border border-slate-200 bg-slate-50"
                 key={student.id}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
+import { defaultHomeHeroSlides, type HomeHeroSlide } from "@/lib/home-hero-slides";
 import { displayImageUrl } from "@/lib/media-urls";
 
 const introLines = [
@@ -12,48 +13,15 @@ const introLines = [
   "Những câu chuyện trưởng thành sẽ tiếp tục được viết từ đây, và mãi về sau.",
 ];
 
-const slides = [
-  {
-    caption: "Tin2023 · Kỷ niệm cấp 3 là thứ càng trưởng thành càng thấy quý giá.",
-    image:
-      "https://drive.google.com/open?id=1rnXV8ZvdHMOxiEunF_jEy4e9F_Z_WYDt&usp=drive_fs",
-  },
-  {
-    caption: "Tin2326 · Điều đẹp nhất của tuổi trẻ là đã từng cùng nhau đi qua nó.",
-    image:
-      "https://drive.google.com/open?id=17wypm_VMME-9YY6QK4DwX4InLsM1vvOt&usp=drive_fs",
-  },
-  {
-    caption: "Đội tuyển Tin · Thanh xuân đôi khi chỉ là một phòng học đầy tiếng gõ bàn phím.",
-    image:
-      "https://drive.google.com/open?id=1sQJrXZKqE9KmkEJ_gWCAyGf75VU6D--F&usp=drive_fs",
-  },
-  {
-    caption: "Đội tuyển Robotics FTC · Nơi từng có bảng trắng, máy tính và cả một bầu trời thanh xuân.",
-    image:
-      "https://drive.google.com/open?id=1Y8Zdj0kMM_QppxzTsH1N7UqZprZT-Rnb&usp=drive_fs",
-  },
-  {
-    caption: "Đội tuyển AI · Thanh xuân của dân Tin: deadline, contest và những đêm không ngủ.",
-    image:
-      "https://drive.google.com/open?id=1Uwn6Q24bxQNnWKU_xOLnwphqCzG2uXxr&usp=drive_fs",
-  },
-  {
-    caption: "Đội tuyển Robotics FTC · Robot có thể chạy bằng động cơ, còn chúng ta chạy bằng đam mê.",
-    image:
-      "https://drive.google.com/open?id=1A2Fcf4HAdmdzZXPd391xVF3R6nhm8BVz&usp=drive_fs",
-  },
-  {
-    caption: "Đội tuyển AI · Code, robot, AI và những giấc mơ chưa giới hạn.",
-    image:
-      "https://drive.google.com/open?id=11XTbGqwgxzRd8J4NwfUEy6_FpRdxEfDK&usp=drive_fs",
-  },
-];
-
-export function HomeHeroCarousel() {
+export function HomeHeroCarousel({
+  slides = defaultHomeHeroSlides,
+}: {
+  slides?: HomeHeroSlide[];
+}) {
+  const heroSlides = slides.length ? slides : defaultHomeHeroSlides;
   const [activeIndex, setActiveIndex] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
-  const active = slides[activeIndex];
+  const active = heroSlides[activeIndex] ?? heroSlides[0];
 
   useEffect(() => {
     if (!autoPlay) {
@@ -61,24 +29,27 @@ export function HomeHeroCarousel() {
     }
 
     const interval = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % slides.length);
+      setActiveIndex((current) => (current + 1) % heroSlides.length);
     }, 5500);
 
     return () => window.clearInterval(interval);
-  }, [autoPlay]);
+  }, [autoPlay, heroSlides.length]);
 
   return (
     <section className="relative overflow-hidden bg-slate-950 text-white">
-      {slides.map((slide, index) => (
+      {heroSlides.map((slide, index) => (
         <div
           aria-hidden
           className={
             index === activeIndex
-              ? "absolute inset-0 bg-cover bg-center opacity-100 transition-opacity duration-700"
-              : "absolute inset-0 bg-cover bg-center opacity-0 transition-opacity duration-700"
+              ? "absolute inset-0 bg-cover opacity-100 transition-opacity duration-700"
+              : "absolute inset-0 bg-cover opacity-0 transition-opacity duration-700"
           }
-          key={slide.image}
-          style={{ backgroundImage: `url(${displayImageUrl(slide.image) ?? slide.image})` }}
+          key={`${slide.image}-${index}`}
+          style={{
+            backgroundImage: `url(${displayImageUrl(slide.image) ?? slide.image})`,
+            backgroundPosition: slide.imageCrop ?? "50% 50%",
+          }}
         />
       ))}
       <div className="absolute inset-0 bg-slate-950/10" />
@@ -123,7 +94,7 @@ export function HomeHeroCarousel() {
         <footer className="flex flex-wrap items-center justify-between gap-5 border-t border-white/20 py-6">
           <div className="flex min-w-0 items-center gap-4">
             <span className="font-code text-sm text-cyan-100">
-              {String(activeIndex + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+              {String(activeIndex + 1).padStart(2, "0")} / {String(heroSlides.length).padStart(2, "0")}
             </span>
             <p className="max-w-xl text-sm font-medium text-white">{active.caption}</p>
           </div>
@@ -132,7 +103,7 @@ export function HomeHeroCarousel() {
             <button
               aria-label="Ảnh trước"
               className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-slate-950/34 ring-1 ring-white/28 hover:bg-white/18"
-              onClick={() => setActiveIndex((activeIndex - 1 + slides.length) % slides.length)}
+              onClick={() => setActiveIndex((activeIndex - 1 + heroSlides.length) % heroSlides.length)}
               type="button"
             >
               <ChevronLeft aria-hidden className="h-4 w-4" />
@@ -148,7 +119,7 @@ export function HomeHeroCarousel() {
             <button
               aria-label="Ảnh tiếp theo"
               className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-slate-950/34 ring-1 ring-white/28 hover:bg-white/18"
-              onClick={() => setActiveIndex((activeIndex + 1) % slides.length)}
+              onClick={() => setActiveIndex((activeIndex + 1) % heroSlides.length)}
               type="button"
             >
               <ChevronRight aria-hidden className="h-4 w-4" />

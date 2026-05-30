@@ -59,6 +59,8 @@ export default async function TeamStudentInputPage({
       contextLabel={`Đội tuyển ${slug}/${year}`}
       initialData={{
         avatar: profile.avatar,
+        cityCountry: profile.cityCountry,
+        company: profile.company,
         coverImage: profile.coverImage,
         customPhoto1: profile.customPhoto1,
         customPhoto2: profile.customPhoto2,
@@ -71,6 +73,8 @@ export default async function TeamStudentInputPage({
         postGraduateWork: profile.postGraduateWork,
         school: profile.school,
         university: profile.university,
+        workField: profile.workField,
+        yearbookFormat: profile.yearbookFormat,
         yearbookMessage: profile.yearbookMessage,
       }}
       pageId={studentPage.id}

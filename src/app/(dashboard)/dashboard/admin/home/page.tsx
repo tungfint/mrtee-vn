@@ -7,12 +7,19 @@ import {
   AdminPanel,
   AdminShell,
   selectClass,
+  textareaClass,
 } from "@/components/admin/admin-shell";
+import { ImageField } from "@/components/admin/image-field";
 import { requireAdmin } from "@/lib/admin-auth";
+import { getHomeHeroSlides } from "@/lib/home-hero-settings";
+import type { HomeHeroSlide } from "@/lib/home-hero-slides";
 import { getHomeSectionVisibility } from "@/lib/home-section-settings";
 import { prisma } from "@/lib/prisma";
 import {
+  createHomeHeroSlideAction,
+  deleteHomeHeroSlideAction,
   updateHomeAlbumVisibilityAction,
+  updateHomeHeroSlideAction,
   updateHomePostVisibilityAction,
   updateHomeSectionVisibilityAction,
 } from "../actions";
@@ -88,7 +95,7 @@ export default async function AdminHomeContentPage({
   await requireAdmin();
   const feedback = await searchParams;
 
-  const [posts, memories, albums, sectionVisibility] = await Promise.all([
+  const [posts, memories, albums, sectionVisibility, heroSlides] = await Promise.all([
     prisma.post.findMany({
       orderBy: [{ showOnHome: "desc" }, { updatedAt: "desc" }],
       select: {
@@ -117,6 +124,7 @@ export default async function AdminHomeContentPage({
       orderBy: [{ showOnHome: "desc" }, { sortOrder: "asc" }, { updatedAt: "desc" }],
     }),
     getHomeSectionVisibility(),
+    getHomeHeroSlides(),
   ]);
 
   const postRows = [
@@ -167,6 +175,7 @@ export default async function AdminHomeContentPage({
     >
       <div className="grid gap-5">
         <ActionFeedback message={feedback.message} status={feedback.status} />
+        <HomeHeroSlidesPanel slides={heroSlides} />
         <AdminPanel
           description="Ẩn/hiện nhanh các khối tổng hợp ở ngoài trang chủ. Các phần này vẫn giữ dữ liệu trong admin, chỉ thay đổi việc hiển thị cho người xem."
           title="Ẩn / hiện các khối tổng hợp"
@@ -379,6 +388,90 @@ function HomeAlbumPanel({
         ) : (
           <p className="text-sm text-slate-500">Chưa có album phù hợp.</p>
         )}
+      </div>
+    </AdminPanel>
+  );
+}
+
+function HomeHeroSlidesPanel({ slides }: { slides: HomeHeroSlide[] }) {
+  return (
+    <AdminPanel
+      description="Quản lý ảnh banner lớn ở đầu trang chủ. Mỗi slide có ảnh, vị trí crop và caption hiển thị ở thanh dưới banner."
+      title="Slide ảnh banner trang chủ"
+    >
+      <div className="grid gap-4">
+        {slides.map((slide, index) => (
+          <form
+            action={updateHomeHeroSlideAction}
+            className="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4"
+            key={`${slide.image}-${index}`}
+          >
+            <input name="index" type="hidden" value={index} />
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-base font-semibold text-slate-950">
+                Slide {String(index + 1).padStart(2, "0")}
+              </h3>
+              <button
+                className="rounded-md border border-rose-300 bg-white px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50"
+                formAction={deleteHomeHeroSlideAction}
+                formNoValidate
+                type="submit"
+              >
+                Xóa slide
+              </button>
+            </div>
+            <ImageField
+              cropName="imageCrop"
+              defaultCrop={slide.imageCrop}
+              defaultValue={slide.image}
+              label="Ảnh banner"
+              name="image"
+              recommendedSize="1920 x 720px"
+            />
+            <label className="block text-sm font-medium text-slate-700">
+              Caption
+              <textarea
+                className={textareaClass}
+                defaultValue={slide.caption}
+                name="caption"
+                placeholder="Dòng mô tả hiển thị ở cuối banner"
+              />
+            </label>
+            <button
+              className="w-fit rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              type="submit"
+            >
+              Lưu slide
+            </button>
+          </form>
+        ))}
+
+        <form
+          action={createHomeHeroSlideAction}
+          className="grid gap-4 rounded-lg border border-emerald-200 bg-emerald-50/60 p-4"
+        >
+          <h3 className="text-base font-semibold text-slate-950">Thêm slide mới</h3>
+          <ImageField
+            cropName="imageCrop"
+            label="Ảnh banner"
+            name="image"
+            recommendedSize="1920 x 720px"
+          />
+          <label className="block text-sm font-medium text-slate-700">
+            Caption
+            <textarea
+              className={textareaClass}
+              name="caption"
+              placeholder="Dòng mô tả hiển thị ở cuối banner"
+            />
+          </label>
+          <button
+            className="w-fit rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+            type="submit"
+          >
+            Thêm slide
+          </button>
+        </form>
       </div>
     </AdminPanel>
   );

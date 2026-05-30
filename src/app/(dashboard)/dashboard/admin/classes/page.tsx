@@ -14,7 +14,7 @@ export default async function AdminClassesPage() {
 
   const classes = await prisma.class.findMany({
     include: {
-      _count: { select: { memoryPosts: true, students: true } },
+      _count: { select: { members: true, memoryPosts: true, students: true } },
       monitor: { select: { email: true, name: true } },
     },
     orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
@@ -47,7 +47,7 @@ export default async function AdminClassesPage() {
           items={classes.map((item) => ({
             backgroundImage: item.cardBackgroundImage ?? item.coverImage,
             backgroundPosition: item.cardBackgroundImageCrop ?? item.coverImageCrop,
-            description: `${item._count.students} thành viên · ${item._count.memoryPosts} bài viết`,
+            description: `${item._count.members || item._count.students} thành viên · ${item._count.memoryPosts} bài viết`,
             href: `/dashboard/classes/${item.id}/edit`,
             id: item.id,
             meta: item.monitor

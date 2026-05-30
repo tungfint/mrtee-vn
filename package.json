@@ -15,6 +15,7 @@
     "deploy:package": "powershell -ExecutionPolicy Bypass -File scripts/package-tenten.ps1",
     "deploy:migrate": "prisma migrate deploy",
     "cpanel:first-deploy": "node scripts/cpanel-first-deploy.mjs",
+    "cpanel:migrate": "node scripts/cpanel-migrate.mjs",
     "local:dev": "powershell -ExecutionPolicy Bypass -File scripts/dev-local.ps1",
     "local:dev:seed": "powershell -ExecutionPolicy Bypass -File scripts/dev-local.ps1 -Seed",
     "db:seed": "node prisma/seed.mjs",

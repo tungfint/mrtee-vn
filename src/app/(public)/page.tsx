@@ -6,6 +6,7 @@ import { AlbumShowcase } from "@/components/content/album-showcase";
 import { HomeHeroCarousel } from "@/components/home/home-hero-carousel";
 import { HomeNavigation } from "@/components/home/home-navigation";
 import { HomePostsCarousel, type HomePostItem } from "@/components/home/home-posts-carousel";
+import { getHomeHeroSlides } from "@/lib/home-hero-settings";
 import { getHomeSectionVisibility } from "@/lib/home-section-settings";
 import { prisma } from "@/lib/prisma";
 
@@ -13,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 async function loadHomeHighlights() {
   try {
-    const [stories, blogPosts, album, allAlbums, allMediaPosts, classes, teams, sectionVisibility] = await Promise.all([
+    const [stories, blogPosts, album, allAlbums, allMediaPosts, classes, teams, sectionVisibility, heroSlides] = await Promise.all([
       prisma.memoryPost.findMany({
         include: { media: { orderBy: { sortOrder: "asc" } } },
         orderBy: { updatedAt: "desc" },
@@ -88,9 +89,10 @@ async function loadHomeHighlights() {
         },
       }),
       getHomeSectionVisibility(),
+      getHomeHeroSlides(),
     ]);
 
-    return { album, allAlbums, allMediaPosts, blogPosts, classes, sectionVisibility, stories, teams };
+    return { album, allAlbums, allMediaPosts, blogPosts, classes, heroSlides, sectionVisibility, stories, teams };
   } catch {
     return {
       album: null,
@@ -98,6 +100,7 @@ async function loadHomeHighlights() {
       allMediaPosts: [],
       blogPosts: [],
       classes: [],
+      heroSlides: [],
       sectionVisibility: { allImages: true, allPosts: true, allVideos: true },
       stories: [],
       teams: [],
@@ -133,7 +136,7 @@ function uniqueByUrl<T extends { url: string }>(items: T[]) {
 }
 
 export default async function HomePage() {
-  const { album, allAlbums, allMediaPosts, blogPosts, classes, sectionVisibility, stories, teams } = await loadHomeHighlights();
+  const { album, allAlbums, allMediaPosts, blogPosts, classes, heroSlides, sectionVisibility, stories, teams } = await loadHomeHighlights();
   const teamItems = Array.from(
     new Map(teams.map((team) => [team.category, team])).values(),
   );
@@ -246,22 +249,22 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <HomeHeroCarousel />
+      <HomeHeroCarousel slides={heroSlides} />
 
       <section className="border-b border-slate-200 bg-white">
         <div className="mx-auto grid max-w-7xl gap-5 px-5 py-8 sm:px-8 md:grid-cols-3 lg:px-10">
           <div className="flex items-start gap-3">
             <GraduationCap aria-hidden className="mt-1 h-5 w-5 shrink-0 text-emerald-700" />
             <div>
-              <p className="text-sm font-semibold">Lớp chủ nhiệm</p>
-              <p className="mt-1 text-sm leading-6 text-slate-600">Tin2023 và Tin2326, hồ sơ và lưu bút theo lớp.</p>
+              <p className="text-sm font-semibold">Các lớp chủ nhiệm</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">Tin2023, Tin2326,... hồ sơ và lưu bút theo lớp.</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <CalendarDays aria-hidden className="mt-1 h-5 w-5 shrink-0 text-emerald-700" />
             <div>
-              <p className="text-sm font-semibold">Đội tuyển theo năm</p>
-              <p className="mt-1 text-sm leading-6 text-slate-600">HSG Tin 2024 - 2026, FTC và AI Lab.</p>
+              <p className="text-sm font-semibold">Các đội tuyển theo năm</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">Đội tuyển HSG Tin, Robotics FTC, AI,...</p>
             </div>
           </div>
           <div className="flex items-start gap-3">

@@ -14,6 +14,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/admin-auth";
+import { getHomeHeroSlides, setHomeHeroSlides } from "@/lib/home-hero-settings";
 import { homeSectionSettingKeys } from "@/lib/home-section-settings";
 import { prisma } from "@/lib/prisma";
 import { slugifyVietnamese, studentEmailFromSlug } from "@/lib/slugs";
@@ -68,8 +69,9 @@ function parseStudentImportLines(value: string) {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const [namePart, slugPart] = line.split("|").map((part) => part.trim());
+      const [namePart, slugPart, emailPart] = line.split("|").map((part) => part.trim());
       return {
+        email: emailPart?.toLowerCase() || null,
         fullName: namePart,
         slug: slugPart ? slugifyVietnamese(slugPart) : slugifyVietnamese(namePart),
       };
@@ -137,6 +139,36 @@ function optionalStudentProfileId(formData: FormData) {
 function optionalUserId(formData: FormData, key: string) {
   const userId = optional(formData, key);
   return userId === "none" ? null : userId;
+}
+
+async function findStudentProfileByImportIdentity(fullName: string, email?: string | null) {
+  if (email) {
+    const user = await prisma.user.findUnique({
+      include: { profile: true },
+      where: { email },
+    });
+
+    if (user?.profile) return user.profile;
+  }
+
+  return prisma.studentProfile.findFirst({
+    where: { fullName },
+  });
+}
+
+async function ensureClassMembership(studentProfileId: string, classId?: string | null) {
+  if (!classId) return;
+
+  await prisma.classMember.upsert({
+    create: { classId, studentProfileId },
+    update: {},
+    where: {
+      classId_studentProfileId: {
+        classId,
+        studentProfileId,
+      },
+    },
+  });
 }
 
 function feedbackUrl(path: string, status: "success" | "error", message: string) {
@@ -375,12 +407,14 @@ export async function createStudentAction(formData: FormData) {
 
   const email = required(formData, "email").toLowerCase();
   const fullName = required(formData, "fullName");
+  const classId = optionalClassId(formData);
   const password = optional(formData, "password") ?? "Mrtee@2026";
   const role = required(formData, "role") as Role;
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
+    include: { profile: true },
     data: {
-      classId: optionalClassId(formData),
+      classId,
       email,
       name: fullName,
       passwordHash: await hash(password, 12),
@@ -412,6 +446,10 @@ export async function createStudentAction(formData: FormData) {
     },
   });
 
+  if (user.profile) {
+    await ensureClassMembership(user.profile.id, classId);
+  }
+
   revalidatePath("/dashboard/admin/students");
 }
 
@@ -420,11 +458,13 @@ export async function updateStudentAction(formData: FormData) {
 
   const userId = required(formData, "userId");
   const fullName = required(formData, "fullName");
+  const classId = optionalClassId(formData);
 
-  await prisma.user.update({
+  const user = await prisma.user.update({
+    include: { profile: true },
     where: { id: userId },
     data: {
-      classId: optionalClassId(formData),
+      classId,
       email: required(formData, "email").toLowerCase(),
       name: fullName,
       role: required(formData, "role") as Role,
@@ -479,6 +519,10 @@ export async function updateStudentAction(formData: FormData) {
     },
   });
 
+  if (user.profile) {
+    await ensureClassMembership(user.profile.id, classId);
+  }
+
   revalidatePath("/dashboard/admin/students");
   revalidatePath("/", "layout");
 }
@@ -489,10 +533,21 @@ export async function removeClassMemberAction(formData: FormData) {
   const classId = required(formData, "classId");
   const userId = required(formData, "userId");
 
+  const user = await prisma.user.findUnique({
+    select: { profile: { select: { id: true } } },
+    where: { id: userId },
+  });
+
   await prisma.user.updateMany({
     data: { classId: null },
     where: { classId, id: userId },
   });
+
+  if (user?.profile) {
+    await prisma.classMember.deleteMany({
+      where: { classId, studentProfileId: user.profile.id },
+    });
+  }
 
   revalidatePath(`/dashboard/classes/${classId}/edit`);
   revalidatePath("/dashboard/admin/classes");
@@ -606,33 +661,43 @@ export async function importStudentPagesAction(formData: FormData) {
       classId,
       teamId,
     });
-    const email = studentEmailFromSlug(contextSlug, studentSlug);
+    const email = student.email ?? studentEmailFromSlug(contextSlug, studentSlug);
+    let profile = await findStudentProfileByImportIdentity(student.fullName, student.email);
 
-    const user = await prisma.user.upsert({
-      create: {
-        classId,
-        email,
-        name: student.fullName,
-        passwordHash,
-        role: Role.STUDENT,
-      },
-      update: {
-        classId: classId ?? undefined,
-        name: student.fullName,
-      },
-      where: { email },
-    });
+    if (!profile) {
+      const user = await prisma.user.upsert({
+        create: {
+          classId,
+          email,
+          name: student.fullName,
+          passwordHash,
+          role: Role.STUDENT,
+        },
+        update: {
+          classId: classId ?? undefined,
+          name: student.fullName,
+        },
+        where: { email },
+      });
 
-    const profile = await prisma.studentProfile.upsert({
-      create: {
-        fullName: student.fullName,
-        userId: user.id,
-      },
-      update: {
-        fullName: student.fullName,
-      },
-      where: { userId: user.id },
-    });
+      profile = await prisma.studentProfile.upsert({
+        create: {
+          fullName: student.fullName,
+          userId: user.id,
+        },
+        update: {
+          fullName: student.fullName,
+        },
+        where: { userId: user.id },
+      });
+    } else if (classId) {
+      await prisma.user.updateMany({
+        data: { classId },
+        where: { id: profile.userId, classId: null },
+      });
+    }
+
+    await ensureClassMembership(profile.id, classId);
 
     if (teamId) {
       await prisma.teamMember.upsert({
@@ -650,17 +715,33 @@ export async function importStudentPagesAction(formData: FormData) {
       });
     }
 
-    await prisma.studentPage.create({
-      data: {
-        classId,
-        fullNameSnapshot: student.fullName,
-        inputToken: studentPageToken(),
-        scope: scope as StudentPageScope,
+    const existingPage = await prisma.studentPage.findFirst({
+      select: { id: true },
+      where: {
+        classId: classId ?? undefined,
         studentProfileId: profile.id,
-        studentSlug,
-        teamId,
+        teamId: teamId ?? undefined,
       },
     });
+
+    if (existingPage) {
+      await prisma.studentPage.update({
+        data: { fullNameSnapshot: student.fullName },
+        where: { id: existingPage.id },
+      });
+    } else {
+      await prisma.studentPage.create({
+        data: {
+          classId,
+          fullNameSnapshot: student.fullName,
+          inputToken: studentPageToken(),
+          scope: scope as StudentPageScope,
+          studentProfileId: profile.id,
+          studentSlug,
+          teamId,
+        },
+      });
+    }
 
     importedCount += 1;
   }
@@ -704,7 +785,7 @@ export async function importClassMembersAction(formData: FormData) {
 
       if (!email || !fullName) continue;
 
-      await prisma.user.upsert({
+      const user = await prisma.user.upsert({
         where: { email },
         update: {
           classId,
@@ -719,9 +800,7 @@ export async function importClassMembersAction(formData: FormData) {
         },
       });
 
-      const user = await prisma.user.findUniqueOrThrow({ where: { email } });
-
-      await prisma.studentProfile.upsert({
+      const profile = await prisma.studentProfile.upsert({
         where: { userId: user.id },
         update: csvProfileData(row, fullName),
         create: {
@@ -729,6 +808,8 @@ export async function importClassMembersAction(formData: FormData) {
           userId: user.id,
         },
       });
+
+      await ensureClassMembership(profile.id, classId);
       importedCount += 1;
     }
   } catch (error) {
@@ -1160,6 +1241,80 @@ export async function updateHomeSectionVisibilityAction(formData: FormData) {
   }
 
   actionCompleted(path, "Đã lưu cấu hình hiển thị trang chủ.");
+}
+
+export async function createHomeHeroSlideAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/home";
+
+  try {
+    const image = await optionalImage(formData, "image");
+
+    if (!image) {
+      actionFailed(path, "Ảnh banner là bắt buộc.");
+    }
+
+    const slides = await getHomeHeroSlides();
+    slides.push({
+      caption: optional(formData, "caption") ?? "",
+      image,
+      imageCrop: optional(formData, "imageCrop") ?? "50% 50%",
+    });
+
+    await setHomeHeroSlides(slides);
+  } catch (error) {
+    actionFailed(path, "Không thể thêm slide banner trang chủ.", error);
+  }
+
+  actionCompleted(path, "Đã thêm slide banner trang chủ.");
+}
+
+export async function updateHomeHeroSlideAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/home";
+  const index = Number(required(formData, "index"));
+
+  try {
+    const slides = await getHomeHeroSlides();
+
+    if (!Number.isInteger(index) || index < 0 || index >= slides.length) {
+      actionFailed(path, "Slide banner không hợp lệ.");
+    }
+
+    const image = await optionalImage(formData, "image");
+    slides[index] = {
+      caption: optional(formData, "caption") ?? "",
+      image: image ?? slides[index].image,
+      imageCrop: optional(formData, "imageCrop") ?? "50% 50%",
+    };
+
+    await setHomeHeroSlides(slides);
+  } catch (error) {
+    actionFailed(path, "Không thể lưu slide banner trang chủ.", error);
+  }
+
+  actionCompleted(path, "Đã lưu slide banner trang chủ.");
+}
+
+export async function deleteHomeHeroSlideAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/home";
+  const index = Number(required(formData, "index"));
+
+  try {
+    const slides = await getHomeHeroSlides();
+
+    if (!Number.isInteger(index) || index < 0 || index >= slides.length) {
+      actionFailed(path, "Slide banner không hợp lệ.");
+    }
+
+    slides.splice(index, 1);
+    await setHomeHeroSlides(slides);
+  } catch (error) {
+    actionFailed(path, "Không thể xóa slide banner trang chủ.", error);
+  }
+
+  actionCompleted(path, "Đã xóa slide banner trang chủ.");
 }
 
 export async function createPlaylistAction(formData: FormData) {

@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useMemo, useState, useTransition } from "react";
 
 import { regenerateStudentPageTokenAction } from "@/app/(dashboard)/dashboard/admin/actions";
 
@@ -25,6 +24,36 @@ type StudentLinkContext = {
 
 function csvCell(value: string) {
   return `"${value.replace(/"/g, '""')}"`;
+}
+
+function messageFor(row: StudentLinkRow) {
+  return [
+    `Chào ${row.studentName},`,
+    `Em vào link này để nhập/cập nhật thông tin hồ sơ trên mrtee.vn: ${row.infoHref}`,
+    `Nếu muốn gửi bài viết/lưu bút riêng, dùng link: ${row.articleHref}`,
+  ].join("\n");
+}
+
+function CopyButton({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  return (
+    <button
+      className="rounded-md border border-slate-300 bg-white px-3 py-2 font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-wait disabled:opacity-70"
+      disabled={isPending}
+      onClick={() => {
+        startTransition(async () => {
+          await navigator.clipboard.writeText(value);
+          setCopied(true);
+          window.setTimeout(() => setCopied(false), 1600);
+        });
+      }}
+      type="button"
+    >
+      {copied ? "Đã copy" : label}
+    </button>
+  );
 }
 
 export function StudentLinksManager({
@@ -69,6 +98,7 @@ export function StudentLinksManager({
       "trang_public",
       "link_thong_tin",
       "link_bai_viet",
+      "tin_nhan_gui_hoc_sinh",
     ];
     const body = filteredRows.map((row) =>
       [
@@ -79,6 +109,7 @@ export function StudentLinksManager({
         row.publicHref,
         row.infoHref,
         row.articleHref,
+        messageFor(row),
       ]
         .map(csvCell)
         .join(","),
@@ -139,15 +170,17 @@ export function StudentLinksManager({
                   <p className="mt-1 font-code text-xs text-slate-500">token: {row.token}</p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-sm">
-                  <Link className="rounded-md border border-slate-300 bg-white px-3 py-2 font-medium text-slate-700 hover:bg-slate-100" href={row.publicHref}>
+                  <a className="rounded-md border border-slate-300 bg-white px-3 py-2 font-medium text-slate-700 hover:bg-slate-100" href={row.publicHref} rel="noreferrer" target="_blank">
                     Trang public
-                  </Link>
-                  <Link className="rounded-md bg-slate-900 px-3 py-2 font-medium text-white hover:bg-slate-800" href={row.infoHref}>
+                  </a>
+                  <a className="rounded-md bg-slate-900 px-3 py-2 font-medium text-white hover:bg-slate-800" href={row.infoHref} rel="noreferrer" target="_blank">
                     Link thông tin
-                  </Link>
-                  <Link className="rounded-md bg-emerald-700 px-3 py-2 font-medium text-white hover:bg-emerald-800" href={row.articleHref}>
+                  </a>
+                  <a className="rounded-md bg-emerald-700 px-3 py-2 font-medium text-white hover:bg-emerald-800" href={row.articleHref} rel="noreferrer" target="_blank">
                     Link bài viết
-                  </Link>
+                  </a>
+                  <CopyButton label="Copy link thông tin" value={row.infoHref} />
+                  <CopyButton label="Copy tin nhắn" value={messageFor(row)} />
                   <form action={regenerateStudentPageTokenAction}>
                     <input name="studentPageId" type="hidden" value={row.id} />
                     <button

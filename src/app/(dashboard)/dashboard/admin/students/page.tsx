@@ -16,6 +16,10 @@ import { createStudentAction, importStudentPagesAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
+function siteUrl() {
+  return (process.env.NEXTAUTH_URL ?? "https://mrtee.vn").replace(/\/$/, "");
+}
+
 export default async function AdminStudentsPage() {
   await requireAdmin();
 
@@ -61,9 +65,10 @@ export default async function AdminStudentsPage() {
       ? `/${page.class?.slug ?? ""}`
       : `/${page.team?.category.toLowerCase().replace("_", "-")}/${page.team?.year}`;
     const publicHref = `${contextPath}/${page.studentSlug}`;
+    const absolutePublicHref = `${siteUrl()}${publicHref}`;
 
     return {
-      articleHref: `${publicHref}/baiviet/${page.inputToken}`,
+      articleHref: `${absolutePublicHref}/baiviet/${page.inputToken}`,
       contextId: isClass
         ? `${StudentPageScope.CLASS}:${page.classId}`
         : `${StudentPageScope.TEAM}:${page.teamId}`,
@@ -71,8 +76,8 @@ export default async function AdminStudentsPage() {
         ? `${page.class?.name ?? "Lớp học"} /${page.class?.slug ?? ""}`
         : `${page.team?.category.toLowerCase().replace("_", "-")}/${page.team?.year}`,
       id: page.id,
-      infoHref: `${publicHref}/thongtin/${page.inputToken}`,
-      publicHref,
+      infoHref: `${absolutePublicHref}/thongtin/${page.inputToken}`,
+      publicHref: absolutePublicHref,
       scope: page.scope,
       studentName: page.studentProfile.fullName || page.fullNameSnapshot,
       studentSlug: page.studentSlug,
@@ -87,7 +92,7 @@ export default async function AdminStudentsPage() {
     >
       <div className="grid gap-5">
         <AdminPanel
-          description="Chọn một lớp hoặc một đội tuyển, sau đó nhập mỗi học sinh một dòng. Có thể ghi 'Tên học sinh | slug-rieng' nếu muốn tự đặt slug."
+          description="Chọn một lớp hoặc một đội tuyển, sau đó nhập mỗi học sinh một dòng. Hệ thống sẽ dùng lại hồ sơ đã có theo email hoặc họ tên để tránh nhập thông tin nhiều lần. Có thể ghi 'Tên học sinh | slug-rieng | email' nếu muốn chỉ rõ hồ sơ."
           title="Import học sinh và tạo link"
         >
           <form action={importStudentPagesAction} className="grid gap-4">
@@ -117,7 +122,7 @@ export default async function AdminStudentsPage() {
               <textarea
                 className={`${textareaClass} min-h-40`}
                 name="studentPageNames"
-                placeholder={"Nguyễn Thanh Tùng\nLê Văn An\nLê Văn An | levanan2"}
+                placeholder={"Nguyễn Thanh Tùng\nLê Văn An\nLê Văn An | levanan2 | an@example.com"}
                 required
               />
             </Field>
