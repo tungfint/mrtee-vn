@@ -248,11 +248,13 @@ export function MediaGallery({
                     }}
                     type="button"
                   >
-                    <img
-                      alt={image.title ?? `${title} ${index + 1}`}
-                      className="gallery-grid-image w-full object-cover transition group-hover:scale-105 sm:aspect-[4/3] sm:h-auto"
-                      src={imageUrl}
-                    />
+                    <span className="flex min-h-[220px] w-full items-center justify-center bg-slate-100 sm:aspect-[4/3] sm:min-h-0">
+                      <img
+                        alt={image.title ?? `${title} ${index + 1}`}
+                        className="max-h-[72vh] w-full object-contain transition group-hover:scale-[1.02] sm:h-full sm:max-h-none sm:object-cover"
+                        src={imageUrl}
+                      />
+                    </span>
                     <span className="block truncate px-3 py-2 text-xs font-medium text-slate-700">
                       {image.title ?? `Ảnh ${index + 1}`}
                     </span>

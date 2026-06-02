@@ -1,6 +1,8 @@
 import TeamYearPage from "../../team/[category]/[year]/page";
 import StudentProfilePage from "../../student/[id]/page";
 import { prisma } from "@/lib/prisma";
+import { classStudentSlugRedirect } from "@/lib/student-page-slug-redirects";
+import { redirect } from "next/navigation";
 
 export default async function PublicTeamYearPage({
   params,
@@ -20,6 +22,12 @@ export default async function PublicTeamYearPage({
 
     if (studentPage) {
       return <StudentProfilePage params={Promise.resolve({ id: studentPage.studentProfileId })} />;
+    }
+
+    const targetSlug = await classStudentSlugRedirect(slug, year);
+
+    if (targetSlug) {
+      redirect(`/${slug}/${targetSlug}`);
     }
   }
 

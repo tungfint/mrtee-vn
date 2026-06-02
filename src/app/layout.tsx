@@ -28,6 +28,10 @@ export const metadata: Metadata = {
     default: "mrtee.vn",
     template: "%s | mrtee.vn",
   },
+  icons: {
+    icon: "/brand/favicon-clean.svg",
+    shortcut: "/brand/favicon-clean.svg",
+  },
   description:
     "Kỷ yếu số, portfolio giáo dục và blog công nghệ của thầy Tee.",
 };

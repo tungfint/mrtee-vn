@@ -1,7 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { StudentArticleForm } from "@/components/content/student-article-form";
 import { prisma } from "@/lib/prisma";
+import { classStudentSlugRedirect } from "@/lib/student-page-slug-redirects";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,12 @@ export default async function ClassStudentArticlePage({
   });
 
   if (!studentPage?.class) {
+    const targetSlug = await classStudentSlugRedirect(slug, studentSlug, token);
+
+    if (targetSlug) {
+      redirect(`/${slug}/${targetSlug}/baiviet/${token}`);
+    }
+
     notFound();
   }
 

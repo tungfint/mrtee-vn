@@ -11,6 +11,8 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { MrTeeLogo } from "@/components/brand/mrtee-logo";
+
 export { ActionFeedback } from "@/components/admin/action-feedback";
 
 const adminLinks = [
@@ -38,12 +40,12 @@ export function AdminShell({
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <div className="mx-auto grid max-w-7xl gap-6 px-5 py-8 sm:px-8 lg:grid-cols-[240px_1fr] lg:px-10">
         <aside className="h-fit rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-          <Link
-            className="mb-3 block rounded-md px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
+          <MrTeeLogo
+            className="mb-3 rounded-md px-2 py-2 text-slate-900 hover:bg-slate-50"
             href="/dashboard"
-          >
-            mrtee.vn admin
-          </Link>
+            mode="icon"
+            suffix="admin"
+          />
           <nav className="grid gap-1">
             {adminLinks.map((item) => {
               const Icon = item.icon;

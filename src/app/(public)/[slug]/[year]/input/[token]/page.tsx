@@ -1,7 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { StudentInputForm } from "@/components/content/student-input-form";
 import { prisma } from "@/lib/prisma";
+import { classStudentSlugRedirect } from "@/lib/student-page-slug-redirects";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,12 @@ export default async function ClassStudentInputPage({
   });
 
   if (!studentPage?.class) {
+    const targetSlug = await classStudentSlugRedirect(slug, studentSlug, token);
+
+    if (targetSlug) {
+      redirect(`/${slug}/${targetSlug}/input/${token}`);
+    }
+
     notFound();
   }
 

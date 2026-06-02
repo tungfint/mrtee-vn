@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 
 import { PublicAdminSectionEditButton } from "@/components/admin/public-admin-section-edit-button";
+import { MrTeeLogo } from "@/components/brand/mrtee-logo";
 import { AlbumShowcase, type PublicAlbum } from "@/components/content/album-showcase";
 import { MediaGallery, type GalleryMediaItem } from "@/components/content/media-gallery";
 import { MediaStrip } from "@/components/content/media-strip";
@@ -146,10 +147,8 @@ export function CollectionPage({
         />
         <div className="relative mx-auto flex min-h-[min(66vh,640px)] max-w-7xl flex-col px-5 sm:px-8 lg:px-10">
           <header className="flex items-center justify-between border-b border-white/16 py-5">
-            <Link className="font-code text-sm font-semibold text-white sm:text-lg" href="/">
-              mrtee.vn
-            </Link>
-            <p className="slogan-type hidden text-xl text-cyan-50 sm:block">
+            <MrTeeLogo className="rounded-md bg-white/90 px-2 py-1 shadow-sm ring-1 ring-white/60" size="sm" />
+            <p className="font-code hidden text-sm font-semibold text-cyan-50 sm:block">
               If you never try, you&apos;ll never know!
             </p>
           </header>

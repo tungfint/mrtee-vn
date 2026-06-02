@@ -17,7 +17,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { getHomeHeroSlides, setHomeHeroSlides } from "@/lib/home-hero-settings";
 import { homeSectionSettingKeys } from "@/lib/home-section-settings";
 import { prisma } from "@/lib/prisma";
-import { slugifyVietnamese, studentEmailFromSlug } from "@/lib/slugs";
+import { studentImportSlug, studentEmailFromSlug, studentSlugFromName } from "@/lib/slugs";
 import { uploadPublicImage } from "@/lib/uploads";
 
 function required(formData: FormData, key: string) {
@@ -77,7 +77,7 @@ function parseStudentImportLines(value: string) {
       return {
         email,
         fullName: namePart,
-        slug: slugPart ? slugifyVietnamese(slugPart) : slugifyVietnamese(namePart),
+        slug: studentImportSlug(namePart, slugPart),
       };
     })
     .filter((item) => item.fullName && item.slug);
@@ -778,6 +778,77 @@ export async function regenerateStudentPageTokenAction(formData: FormData) {
   });
 
   actionCompleted("/dashboard/admin/students", "Đã tạo link mới cho học sinh.");
+}
+
+export async function normalizeStudentPageSlugsAction() {
+  await requireAdmin();
+  const path = "/dashboard/admin/students";
+
+  try {
+    const pages = await prisma.studentPage.findMany({
+      include: {
+        studentProfile: { select: { fullName: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    const reserved = new Set<string>();
+    const updates: { fullName: string; id: string; nextSlug: string }[] = [];
+
+    for (const page of pages) {
+      const fullName = page.studentProfile.fullName || page.fullNameSnapshot;
+      const baseSlug = studentSlugFromName(fullName);
+
+      if (!baseSlug) {
+        continue;
+      }
+
+      const keyPrefix =
+        page.scope === StudentPageScope.INDEPENDENT
+          ? "independent"
+          : page.classId
+            ? `class:${page.classId}`
+            : `team:${page.teamId}`;
+      let nextSlug = baseSlug;
+      let suffix = 0;
+
+      while (reserved.has(`${keyPrefix}:${nextSlug}`)) {
+        suffix += 1;
+        nextSlug = `${baseSlug}${suffix}`;
+      }
+
+      reserved.add(`${keyPrefix}:${nextSlug}`);
+
+      if (nextSlug !== page.studentSlug || fullName !== page.fullNameSnapshot) {
+        updates.push({ fullName, id: page.id, nextSlug });
+      }
+    }
+
+    if (updates.length) {
+      await prisma.$transaction(
+        updates.map((item) =>
+          prisma.studentPage.update({
+            data: { studentSlug: `tmp-${item.id}` },
+            where: { id: item.id },
+          }),
+        ),
+      );
+      await prisma.$transaction(
+        updates.map((item) =>
+          prisma.studentPage.update({
+            data: {
+              fullNameSnapshot: item.fullName,
+              studentSlug: item.nextSlug,
+            },
+            where: { id: item.id },
+          }),
+        ),
+      );
+    }
+
+    actionCompleted(path, `Đã chuẩn hóa ${updates.length} link học sinh theo tên.`);
+  } catch (error) {
+    actionFailed(path, "Không thể chuẩn hóa link học sinh theo tên.", error);
+  }
 }
 
 export async function deleteStudentPagesAction(formData: FormData) {

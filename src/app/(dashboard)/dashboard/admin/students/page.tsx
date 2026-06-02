@@ -12,7 +12,7 @@ import {
 import { StudentLinksManager, type StudentLinkRow } from "@/components/admin/student-links-manager";
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { createStudentAction, importStudentPagesAction } from "../actions";
+import { createStudentAction, importStudentPagesAction, normalizeStudentPageSlugsAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -106,45 +106,55 @@ export default async function AdminStudentsPage() {
           description="Chọn một lớp hoặc một đội tuyển, sau đó nhập mỗi học sinh một dòng. Hệ thống sẽ dùng lại hồ sơ đã có theo email hoặc họ tên để tránh nhập thông tin nhiều lần. Có thể ghi 'Tên học sinh | slug-rieng | email' nếu muốn chỉ rõ hồ sơ."
           title="Import học sinh và tạo link"
         >
-          <form action={importStudentPagesAction} className="grid gap-4">
-            <Field label="Lớp / đội tuyển">
-              <select className={selectClass} name="studentPageContext" required>
-                <option value={`${StudentPageScope.INDEPENDENT}:none`}>Hồ sơ độc lập - không thuộc lớp/đội tuyển</option>
-                <optgroup label="Lớp học">
-                  {classes.map((item) => (
-                    <option key={item.id} value={`${StudentPageScope.CLASS}:${item.id}`}>
-                      {item.name} /{item.slug}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="Đội tuyển">
-                  {teams.map((team) => {
-                    const slug = team.category.toLowerCase().replace("_", "-");
-
-                    return (
-                      <option key={team.id} value={`${StudentPageScope.TEAM}:${team.id}`}>
-                        {slug}/{team.year}
+          <div className="grid gap-4">
+            <form action={importStudentPagesAction} className="grid gap-4">
+              <Field label="Lớp / đội tuyển">
+                <select className={selectClass} name="studentPageContext" required>
+                  <option value={`${StudentPageScope.INDEPENDENT}:none`}>Hồ sơ độc lập - không thuộc lớp/đội tuyển</option>
+                  <optgroup label="Lớp học">
+                    {classes.map((item) => (
+                      <option key={item.id} value={`${StudentPageScope.CLASS}:${item.id}`}>
+                        {item.name} /{item.slug}
                       </option>
-                    );
-                  })}
-                </optgroup>
-              </select>
-            </Field>
-            <Field label="Danh sách học sinh">
-              <textarea
-                className={`${textareaClass} min-h-40`}
-                name="studentPageNames"
-                placeholder={"Nguyễn Thanh Tùng\nLê Văn An\nLê Văn An | levanan2 | an@example.com"}
-                required
-              />
-            </Field>
-            <button
-              className="w-fit rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
-              type="submit"
-            >
-              Tạo link học sinh
-            </button>
-          </form>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Đội tuyển">
+                    {teams.map((team) => {
+                      const slug = team.category.toLowerCase().replace("_", "-");
+
+                      return (
+                        <option key={team.id} value={`${StudentPageScope.TEAM}:${team.id}`}>
+                          {slug}/{team.year}
+                        </option>
+                      );
+                    })}
+                  </optgroup>
+                </select>
+              </Field>
+              <Field label="Danh sách học sinh">
+                <textarea
+                  className={`${textareaClass} min-h-40`}
+                  name="studentPageNames"
+                  placeholder={"Nguyễn Thanh Tùng\nLê Văn An\nLê Văn An | levanan2 | an@example.com"}
+                  required
+                />
+              </Field>
+              <button
+                className="w-fit rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800"
+                type="submit"
+              >
+                Tạo link học sinh
+              </button>
+            </form>
+            <form action={normalizeStudentPageSlugsAction}>
+              <button
+                className="w-fit rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+                type="submit"
+              >
+                Chuẩn hóa link học sinh theo tên
+              </button>
+            </form>
+          </div>
         </AdminPanel>
 
         <AdminPanel

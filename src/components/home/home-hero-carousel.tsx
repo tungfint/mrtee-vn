@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { MrTeeLogo } from "@/components/brand/mrtee-logo";
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
 import { defaultHomeHeroSlides, type HomeHeroSlide } from "@/lib/home-hero-slides";
 import { displayImageUrl } from "@/lib/media-urls";
@@ -57,15 +58,10 @@ export function HomeHeroCarousel({
 
       <div className="relative mx-auto flex min-h-[min(84vh,820px)] max-w-7xl flex-col px-5 sm:px-8 lg:px-10">
         <header className="flex items-center justify-between gap-5 border-b border-white/16 py-5">
-          <div className="flex min-w-0 max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-md bg-slate-950/38 px-3 py-2 shadow-lg shadow-slate-950/20 ring-1 ring-white/16 backdrop-blur-sm sm:flex-nowrap sm:gap-5">
-            <Link
-              className="font-code shrink-0 text-base font-semibold tracking-wide text-white drop-shadow sm:text-2xl"
-              href="/"
-            >
-              mrtee.vn
-            </Link>
-            <span aria-hidden className="hidden h-5 w-px shrink-0 bg-white/24 sm:block" />
-            <p className="slogan-type min-w-0 flex-1 text-[13px] leading-4 text-white drop-shadow sm:truncate sm:text-2xl sm:leading-none">
+          <div className="flex min-w-0 max-w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-md bg-white/90 px-3 py-2 shadow-lg shadow-slate-950/18 ring-1 ring-white/60 backdrop-blur-sm sm:flex-nowrap sm:gap-4">
+            <MrTeeLogo className="shrink-0" size="sm" />
+            <span aria-hidden className="hidden h-6 w-px shrink-0 bg-slate-300 sm:block" />
+            <p className="font-code min-w-0 flex-1 text-[12px] font-semibold leading-4 text-slate-700 sm:truncate sm:text-sm sm:leading-none">
               If you never try, you&apos;ll never know!
             </p>
           </div>

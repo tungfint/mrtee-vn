@@ -112,6 +112,13 @@ async function loadStudent(id: string) {
           orderBy: { updatedAt: "desc" },
           where: { publishedAt: { not: null } },
         },
+        pages: {
+          include: {
+            class: { select: { name: true } },
+            team: { select: { category: true, year: true } },
+          },
+          orderBy: { createdAt: "asc" },
+        },
         user: true,
       },
       where: {
@@ -121,6 +128,22 @@ async function loadStudent(id: string) {
   } catch {
     return null;
   }
+}
+
+function studentContextLabel(profile: Awaited<ReturnType<typeof loadStudent>>) {
+  const classPage = profile?.pages.find((page) => page.class);
+
+  if (classPage?.class) {
+    return classPage.class.name;
+  }
+
+  const teamPage = profile?.pages.find((page) => page.team);
+
+  if (teamPage?.team) {
+    return `${teamPage.team.category.replace("_", " ")} ${teamPage.team.year}`;
+  }
+
+  return "mrtee.vn";
 }
 
 export default async function StudentProfilePage({
@@ -198,7 +221,7 @@ export default async function StudentProfilePage({
         <div className="relative mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:px-10">
           <p className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-2 text-sm font-medium text-emerald-100 ring-1 ring-white/15">
             <Sparkles aria-hidden className="h-4 w-4" />
-            Hồ sơ học sinh #{profile?.id ?? id}
+            Hồ sơ học sinh: {student.fullName} - {studentContextLabel(profile)}
           </p>
           <h1 className="mt-5 text-4xl font-semibold sm:text-6xl">
             {student.fullName}

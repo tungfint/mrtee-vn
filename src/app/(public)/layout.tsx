@@ -1,8 +1,8 @@
-import { Code2, Mail, MapPin, UserRound } from "lucide-react";
-import Link from "next/link";
+import { Mail, MapPin, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { PublicAdminShortcuts } from "@/components/admin/public-admin-shortcuts";
+import { MrTeeLogo } from "@/components/brand/mrtee-logo";
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
@@ -12,10 +12,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
       <footer className="shrink-0 border-t border-slate-200 bg-white text-slate-700">
         <div className="mx-auto grid max-w-7xl gap-6 px-5 py-8 sm:px-8 md:grid-cols-[1.1fr_1fr] lg:px-10">
           <div>
-            <Link className="inline-flex items-center gap-2 text-lg font-semibold text-slate-950" href="/">
-              <Code2 aria-hidden className="h-5 w-5 text-emerald-700" />
-              mrtee.vn
-            </Link>
+            <MrTeeLogo />
             <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
               Nơi lưu giữ kỷ niệm của các lớp học, đội tuyển và các thế hệ học sinh của thầy Tùng.
             </p>
