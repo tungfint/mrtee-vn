@@ -5,7 +5,7 @@ import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
 import { OrderableContentGrid } from "@/components/admin/orderable-content-grid";
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { reorderClassesAction } from "../actions";
+import { deleteClassAction, reorderClassesAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +44,10 @@ export default async function AdminClassesPage() {
               </div>
             </Link>
           )}
+          deleteAction={deleteClassAction}
+          deleteFieldName="classId"
+          deleteLabel="Xóa lớp"
+          deleteMessage="Album, bài viết, link học sinh và liên kết thành viên của lớp này sẽ bị xóa. Tài khoản/hồ sơ học sinh vẫn được giữ nếu không xóa riêng."
           items={classes.map((item) => ({
             backgroundImage: item.cardBackgroundImage ?? item.coverImage,
             backgroundPosition: item.cardBackgroundImageCrop ?? item.coverImageCrop,

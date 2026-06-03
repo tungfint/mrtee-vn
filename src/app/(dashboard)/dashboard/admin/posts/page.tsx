@@ -9,10 +9,11 @@ import {
   selectClass,
   textareaClass,
 } from "@/components/admin/admin-shell";
+import { ConfirmActionButton } from "@/components/admin/confirm-action-button";
 import { ImageField } from "@/components/admin/image-field";
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { createPostAction, updatePostAction } from "../actions";
+import { createPostAction, deletePostAction, updatePostAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -209,6 +210,13 @@ export default async function AdminPostsPage() {
                       required
                     />
                   </Field>
+                  <div className="flex justify-end border-t border-slate-200 pt-4">
+                    <ConfirmActionButton
+                      formAction={deletePostAction}
+                      label="Xóa blog"
+                      message={`Xóa bài blog "${post.title}"? Thao tác này không thể hoàn tác.`}
+                    />
+                  </div>
                 </div>
               </form>
             ))}

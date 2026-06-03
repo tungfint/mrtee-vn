@@ -2,8 +2,10 @@ import { Images, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
+import { ConfirmActionButton } from "@/components/admin/confirm-action-button";
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { deleteAlbumAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -70,23 +72,29 @@ export default async function AdminAlbumsPage() {
               const owner = album.class?.name ?? `${album.team?.category} ${album.team?.year}`;
 
               return (
-                <Link
+                <div
                   className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200 bg-white p-4 hover:border-emerald-300"
-                  href={href}
                   key={album.id}
                 >
-                  <div className="flex items-center gap-3">
-                    <Images aria-hidden className="h-5 w-5 text-emerald-700" />
-                    <div>
-                      <p className="font-semibold text-slate-900">{album.title}</p>
+                  <Link className="flex min-w-0 flex-1 items-center gap-3" href={href}>
+                    <Images aria-hidden className="h-5 w-5 shrink-0 text-emerald-700" />
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-slate-900">{album.title}</p>
                       <p className="text-sm text-slate-500">{owner}</p>
                     </div>
-                  </div>
+                  </Link>
                   <p className="text-sm text-slate-600">
                     {album._count.items} media · {album.playlist?.name ?? "Không playlist"} ·{" "}
                     {album.published ? "Public" : "Private"}
                   </p>
-                </Link>
+                  <form action={deleteAlbumAction}>
+                    <input name="albumId" type="hidden" value={album.id} />
+                    <ConfirmActionButton
+                      label="Xóa album"
+                      message={`Xóa album "${album.title}"? Toàn bộ media item trong album cũng sẽ bị xóa. Thao tác này không thể hoàn tác.`}
+                    />
+                  </form>
+                </div>
               );
             })
           ) : (

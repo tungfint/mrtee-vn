@@ -9,10 +9,11 @@ import {
   selectClass,
   textareaClass,
 } from "@/components/admin/admin-shell";
+import { ConfirmActionButton } from "@/components/admin/confirm-action-button";
 import { ImageField } from "@/components/admin/image-field";
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { createMemoryPostAction, updateMemoryPostAction } from "../actions";
+import { createMemoryPostAction, deleteMemoryPostAction, updateMemoryPostAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -310,6 +311,13 @@ export default async function AdminMemoriesPage() {
                       required
                     />
                   </Field>
+                  <div className="flex justify-end border-t border-slate-200 pt-4">
+                    <ConfirmActionButton
+                      formAction={deleteMemoryPostAction}
+                      label="Xóa bài"
+                      message={`Xóa bài "${memory.title}"? Media đi kèm cũng sẽ bị xóa. Thao tác này không thể hoàn tác.`}
+                    />
+                  </div>
                 </div>
               </form>
             ))}

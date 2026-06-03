@@ -248,13 +248,10 @@ export function MediaGallery({
                     }}
                     type="button"
                   >
-                    <span className="flex min-h-[220px] w-full items-center justify-center bg-slate-100 sm:aspect-[4/3] sm:min-h-0">
-                      <img
-                        alt={image.title ?? `${title} ${index + 1}`}
-                        className="max-h-[72vh] w-full object-contain transition group-hover:scale-[1.02] sm:h-full sm:max-h-none sm:object-cover"
-                        src={imageUrl}
-                      />
-                    </span>
+                    <ImageThumb
+                      src={imageUrl}
+                      title={image.title ?? `${title} ${index + 1}`}
+                    />
                     <span className="block truncate px-3 py-2 text-xs font-medium text-slate-700">
                       {image.title ?? `Ảnh ${index + 1}`}
                     </span>
@@ -422,6 +419,18 @@ export function MediaGallery({
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function ImageThumb({ src, title }: { src: string; title: string }) {
+  return (
+    <div className="relative aspect-[4/3] min-h-[300px] overflow-hidden bg-slate-100 sm:min-h-0">
+      <img
+        alt={title}
+        className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+        src={src}
+      />
     </div>
   );
 }

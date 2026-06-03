@@ -4,6 +4,7 @@ import { GripVertical, Save } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState, useTransition } from "react";
 
+import { ConfirmActionButton } from "@/components/admin/confirm-action-button";
 import { BackgroundCard } from "@/components/ui/background-card";
 
 type OrderableItem = {
@@ -17,14 +18,23 @@ type OrderableItem = {
 };
 
 type OrderAction = (formData: FormData) => Promise<void>;
+type DeleteAction = (formData: FormData) => Promise<void>;
 
 export function OrderableContentGrid({
   action,
   addCard,
+  deleteAction,
+  deleteFieldName = "id",
+  deleteLabel = "Xóa",
+  deleteMessage,
   items,
 }: {
   action: OrderAction;
   addCard: ReactNode;
+  deleteAction?: DeleteAction;
+  deleteFieldName?: string;
+  deleteLabel?: string;
+  deleteMessage?: string;
   items: OrderableItem[];
 }) {
   const [orderedItems, setOrderedItems] = useState(items);
@@ -85,6 +95,20 @@ export function OrderableContentGrid({
             }}
             onDragStart={() => setDraggedId(item.id)}
           >
+            {deleteAction ? (
+              <form className="absolute right-3 top-3 z-20" action={deleteAction}>
+                <input name={deleteFieldName} type="hidden" value={item.id} />
+                <ConfirmActionButton
+                  className="bg-white/92 px-3 py-2 shadow-sm"
+                  label={deleteLabel}
+                  message={
+                    deleteMessage
+                      ? `Xóa "${item.title}"? ${deleteMessage}`
+                      : `Xóa "${item.title}"? Thao tác này không thể hoàn tác.`
+                  }
+                />
+              </form>
+            ) : null}
             <a className="block" href={item.href}>
               <BackgroundCard
                 backgroundImage={item.backgroundImage}

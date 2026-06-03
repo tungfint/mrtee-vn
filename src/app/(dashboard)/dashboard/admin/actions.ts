@@ -379,6 +379,21 @@ export async function updateClassAction(formData: FormData) {
   revalidatePath("/dashboard/admin/classes");
 }
 
+export async function deleteClassAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/classes";
+
+  try {
+    await prisma.class.delete({
+      where: { id: required(formData, "classId") },
+    });
+  } catch (error) {
+    actionFailed(path, "Không thể xóa lớp học. Hãy kiểm tra dữ liệu liên quan rồi thử lại.", error);
+  }
+
+  actionCompleted(path, "Đã xóa lớp học.");
+}
+
 export async function assignClassMonitorAction(formData: FormData) {
   await requireAdmin();
 
@@ -1156,6 +1171,21 @@ export async function updateTeamAction(formData: FormData) {
   revalidatePath("/dashboard/admin/teams");
 }
 
+export async function deleteTeamAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/teams";
+
+  try {
+    await prisma.team.delete({
+      where: { id: required(formData, "teamId") },
+    });
+  } catch (error) {
+    actionFailed(path, "Không thể xóa đội tuyển. Hãy kiểm tra dữ liệu liên quan rồi thử lại.", error);
+  }
+
+  actionCompleted(path, "Đã xóa đội tuyển.");
+}
+
 export async function assignTeamMonitorAction(formData: FormData) {
   await requireAdmin();
 
@@ -1282,6 +1312,21 @@ export async function updatePostAction(formData: FormData) {
   revalidatePath("/blog");
 }
 
+export async function deletePostAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/posts";
+
+  try {
+    await prisma.post.delete({
+      where: { id: required(formData, "id") },
+    });
+  } catch (error) {
+    actionFailed(path, "Không thể xóa bài blog.", error);
+  }
+
+  actionCompleted(path, "Đã xóa bài blog.");
+}
+
 export async function createMemoryPostAction(formData: FormData) {
   const session = await requireAdmin();
   const title = required(formData, "title");
@@ -1342,13 +1387,32 @@ export async function updateMemoryPostAction(formData: FormData) {
 
 export async function deleteMemoryPostAction(formData: FormData) {
   await requireAdmin();
+  const path = "/dashboard/admin/memories";
 
-  await prisma.memoryPost.delete({
-    where: { id: required(formData, "id") },
-  });
+  try {
+    await prisma.memoryPost.delete({
+      where: { id: required(formData, "id") },
+    });
+  } catch (error) {
+    actionFailed(path, "Không thể xóa bài lưu bút/kỷ niệm.", error);
+  }
 
-  revalidatePath("/dashboard/admin/memories");
-  revalidatePath("/", "layout");
+  actionCompleted(path, "Đã xóa bài lưu bút/kỷ niệm.");
+}
+
+export async function deleteAlbumAction(formData: FormData) {
+  await requireAdmin();
+  const path = "/dashboard/admin/albums";
+
+  try {
+    await prisma.album.delete({
+      where: { id: required(formData, "albumId") },
+    });
+  } catch (error) {
+    actionFailed(path, "Không thể xóa album.", error);
+  }
+
+  actionCompleted(path, "Đã xóa album.");
 }
 
 export async function updateHomePostVisibilityAction(formData: FormData) {

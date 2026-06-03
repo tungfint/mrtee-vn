@@ -5,7 +5,7 @@ import { AdminPanel, AdminShell } from "@/components/admin/admin-shell";
 import { OrderableContentGrid } from "@/components/admin/orderable-content-grid";
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import { reorderTeamsAction } from "../actions";
+import { deleteTeamAction, reorderTeamsAction } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +44,10 @@ export default async function AdminTeamsPage() {
               </div>
             </Link>
           )}
+          deleteAction={deleteTeamAction}
+          deleteFieldName="teamId"
+          deleteLabel="Xóa đội"
+          deleteMessage="Album, bài viết, link học sinh và liên kết thành viên của đội này sẽ bị xóa. Hồ sơ học sinh vẫn được giữ nếu không xóa riêng."
           items={teams.map((team) => ({
             backgroundImage: team.cardBackgroundImage ?? team.coverImage,
             backgroundPosition: team.cardBackgroundImageCrop ?? team.coverImageCrop,
