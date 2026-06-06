@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TeamCategory } from "@prisma/client";
 
+import { ShareReactionBar } from "@/components/content/share-reaction-bar";
 import { BackgroundCard } from "@/components/ui/background-card";
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
 import { displayImageUrl } from "@/lib/media-urls";
@@ -82,6 +83,11 @@ export default async function TeamPage({
             <ArrowLeft aria-hidden className="h-4 w-4" />
             Trang chủ
           </Link>
+          <ShareReactionBar
+            className="mt-6 max-w-4xl bg-white/92 text-slate-950"
+            id={`team-overview:${category}`}
+            title={teamName}
+          />
         </div>
       </section>
 

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { MediaStrip } from "@/components/content/media-strip";
 import { RichContent } from "@/components/content/rich-content";
+import { ShareReactionBar } from "@/components/content/share-reaction-bar";
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
 import { displayImageUrl } from "@/lib/media-urls";
 import { prisma } from "@/lib/prisma";
@@ -96,6 +97,11 @@ export default async function MemoryPostPage({
             type: item.type,
             url: item.url,
           }))}
+        />
+        <ShareReactionBar
+          className="mt-8"
+          id={`memory:${post.id}`}
+          title={post.title}
         />
       </article>
     </main>

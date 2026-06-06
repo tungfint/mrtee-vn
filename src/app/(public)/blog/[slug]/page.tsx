@@ -1,5 +1,6 @@
 import { MediaStrip } from "@/components/content/media-strip";
 import { RichContent } from "@/components/content/rich-content";
+import { ShareReactionBar } from "@/components/content/share-reaction-bar";
 import { displayImageUrl } from "@/lib/media-urls";
 import { prisma } from "@/lib/prisma";
 
@@ -55,6 +56,11 @@ export default async function BlogPostPage({
             ]}
           />
         ) : null}
+        <ShareReactionBar
+          className="mt-8"
+          id={`blog:${post?.slug ?? slug}`}
+          title={post?.title ?? "Bài viết mrtee.vn"}
+        />
       </article>
     </main>
   );

@@ -64,6 +64,11 @@ export function MediaGallery({
   const activeVideo = videos[activeVideoIndex];
   const activeImageUrl = activeImage ? displayImageUrl(activeImage.url) : null;
 
+  const openImage = useCallback((image: GalleryMediaItem, index: number) => {
+    setActiveImageIndex(index);
+    setLightboxItem(image);
+  }, [setActiveImageIndex, setLightboxItem]);
+
   function openVideo(video: GalleryMediaItem, index: number) {
     setActiveVideoIndex(index);
     setLightboxItem(video);
@@ -231,22 +236,26 @@ export function MediaGallery({
             <div
               className={
                 constrainGridHeight
-                  ? "gallery-scroll grid max-h-[760px] gap-3 overflow-y-auto pr-1 sm:max-h-[560px] sm:grid-cols-2 lg:max-h-[680px] lg:grid-cols-4"
-                  : "grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+                  ? "gallery-scroll grid auto-rows-[348px] max-h-[760px] gap-3 overflow-y-auto pr-1 sm:auto-rows-auto sm:max-h-[560px] sm:grid-cols-2 lg:max-h-[680px] lg:grid-cols-4"
+                  : "grid auto-rows-[348px] gap-3 sm:auto-rows-auto sm:grid-cols-2 lg:grid-cols-4"
               }
             >
               {images.map((image, index) => {
                 const imageUrl = displayImageUrl(image.url) ?? image.url;
 
                 return (
-                  <button
-                    className="group overflow-hidden rounded-lg border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
+                  <div
+                    className="group flex h-full w-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
                     key={`${image.url}-grid-${index}`}
-                    onClick={() => {
-                      setActiveImageIndex(index);
-                      setLightboxItem(image);
+                    onClick={() => openImage(image, index)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openImage(image, index);
+                      }
                     }}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                   >
                     <ImageThumb
                       src={imageUrl}
@@ -255,7 +264,7 @@ export function MediaGallery({
                     <span className="block truncate px-3 py-2 text-xs font-medium text-slate-700">
                       {image.title ?? `Ảnh ${index + 1}`}
                     </span>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -425,7 +434,7 @@ export function MediaGallery({
 
 function ImageThumb({ src, title }: { src: string; title: string }) {
   return (
-    <div className="relative aspect-[4/3] min-h-[300px] overflow-hidden bg-slate-100 sm:min-h-0">
+    <div className="relative h-[300px] w-full shrink-0 overflow-hidden bg-slate-100 sm:aspect-[4/3] sm:h-auto">
       <img
         alt={title}
         className="h-full w-full object-cover transition group-hover:scale-[1.02]"

@@ -21,6 +21,8 @@
 /build
 *.zip
 *.tar.gz
+*.sql
+!prisma/migrations/**/*.sql
 mrtee_tenten_import*.sql
 
 # misc

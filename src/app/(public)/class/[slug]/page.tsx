@@ -257,6 +257,7 @@ export default async function ClassPage({
       memberEyebrow="Thành viên"
       memberTitle="Gương mặt trong lớp"
       pageKind="class"
+      socialId={`class:${classroom?.slug ?? slug}`}
       stories={storyPosts}
       storyEmptyText="Chưa có bài lưu bút được công khai."
       storyLabel="Lưu bút lớp"

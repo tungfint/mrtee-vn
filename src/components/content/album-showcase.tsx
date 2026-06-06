@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import type { AudioPlaylist } from "@/components/audio/site-music-player";
 import { MediaGallery, type GalleryMediaItem } from "@/components/content/media-gallery";
+import { ShareReactionBar } from "@/components/content/share-reaction-bar";
 import { driveFolderEmbedUrl } from "@/lib/media-urls";
 
 type AlbumViewMode = "SLIDE" | "GRID";
@@ -106,6 +107,11 @@ function AlbumCard({ album }: { album: PublicAlbum }) {
           ) : null}
         </div>
       </div>
+      <ShareReactionBar
+        compact
+        id={`album:${album.id}`}
+        title={album.title}
+      />
       {album.items.length ? (
         <MediaGallery
           constrainGridHeight={album.constrainGridHeight}

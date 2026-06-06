@@ -13,10 +13,12 @@ import Link from "next/link";
 import { PublicAdminSectionEditButton } from "@/components/admin/public-admin-section-edit-button";
 import { MrTeeLogo } from "@/components/brand/mrtee-logo";
 import { AlbumShowcase, type PublicAlbum } from "@/components/content/album-showcase";
+import { CollectionChatPanel } from "@/components/content/collection-chat-panel";
 import { MediaGallery, type GalleryMediaItem } from "@/components/content/media-gallery";
 import { MediaStrip } from "@/components/content/media-strip";
 import { MemoryPostCard } from "@/components/content/memory-post-card";
 import { RichContent } from "@/components/content/rich-content";
+import { ShareReactionBar } from "@/components/content/share-reaction-bar";
 import { BackgroundCard } from "@/components/ui/background-card";
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
 import { displayImageUrl } from "@/lib/media-urls";
@@ -80,6 +82,7 @@ type CollectionPageProps = {
   memberEyebrow: string;
   memberTitle: string;
   pageKind: "class" | "team";
+  socialId?: string;
   storyEmptyText: string;
   storyLabel: string;
   stories: CollectionStory[];
@@ -108,6 +111,7 @@ export function CollectionPage({
   memberEyebrow,
   memberTitle,
   pageKind,
+  socialId,
   storyEmptyText,
   storyLabel,
   stories,
@@ -199,6 +203,11 @@ export function CollectionPage({
               </Link>
             ))}
           </div>
+          <ShareReactionBar
+            className="mb-5 bg-white/92 text-slate-950"
+            id={`${pageKind}:${title}`}
+            title={title}
+          />
         </div>
       </section>
 
@@ -218,6 +227,12 @@ export function CollectionPage({
             </div>
             <RichContent content={intro.content} format={intro.format} />
             <MediaStrip items={intro.media ?? []} />
+            <ShareReactionBar
+              className="mt-6"
+              compact
+              id={`${pageKind}:intro:${title}`}
+              title={intro.title}
+            />
             <div className="mt-8 rounded-lg border border-emerald-100 bg-emerald-50/70 p-5">
               <div className="mb-3 flex items-center gap-2 text-emerald-800">
                 <Trophy aria-hidden className="h-5 w-5" />
@@ -351,6 +366,16 @@ export function CollectionPage({
           </div>
         </div>
       </section>
+
+      <CollectionChatPanel
+        subtitle={
+          pageKind === "team"
+            ? "Góc chat chung của đội tuyển trong năm này."
+            : "Góc chat chung của lớp để mọi người để lại lời nhắn."
+        }
+        targetId={socialId ?? `${pageKind}:${title}`}
+        title={pageKind === "team" ? "Chat đội tuyển" : "Chat lớp"}
+      />
     </main>
   );
 }

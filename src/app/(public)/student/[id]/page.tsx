@@ -11,6 +11,7 @@ import Link from "next/link";
 
 import { MediaStrip } from "@/components/content/media-strip";
 import { RichContent } from "@/components/content/rich-content";
+import { ShareReactionBar } from "@/components/content/share-reaction-bar";
 import { BackgroundCard } from "@/components/ui/background-card";
 import { ImageLightboxButton } from "@/components/ui/image-lightbox";
 import { displayImageUrl } from "@/lib/media-urls";
@@ -238,6 +239,11 @@ export default async function StudentProfilePage({
               Trang chủ
             </Link>
           </div>
+          <ShareReactionBar
+            className="mt-6 max-w-4xl bg-white/92 text-slate-950"
+            id={`student:${profile?.id ?? id}`}
+            title={student.fullName}
+          />
         </div>
       </section>
 
@@ -407,6 +413,12 @@ export default async function StudentProfilePage({
                   content={student.yearbookMessage}
                   format={student.yearbookFormat}
                 />
+                <ShareReactionBar
+                  className="mt-6"
+                  compact
+                  id={`student:${profile?.id ?? id}:yearbook`}
+                  title={`Lưu bút ${student.fullName}`}
+                />
               </article>
             ) : null}
             {posts.map((post) => (
@@ -421,6 +433,12 @@ export default async function StudentProfilePage({
                   format={post.contentFormat}
                 />
                 <MediaStrip items={mediaItems(post.media)} />
+                <ShareReactionBar
+                  className="mt-6"
+                  compact
+                  id={`student-post:${post.id}`}
+                  title={post.title}
+                />
               </article>
             ))}
           </div>

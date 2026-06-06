@@ -49,6 +49,15 @@ enum StudentPageScope {
   INDEPENDENT
 }
 
+enum ReactionType {
+  LIKE
+  HEART
+  HAHA
+  SMILE
+  ANGRY
+  SAD
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -419,6 +428,30 @@ model SiteSetting {
   value     String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model SocialReaction {
+  id           String       @id @default(cuid())
+  targetType   String
+  targetId     String
+  visitorKey   String
+  reactionType ReactionType
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([targetType, targetId, visitorKey])
+  @@index([targetType, targetId, reactionType])
+}
+
+model SocialComment {
+  id         String   @id @default(cuid())
+  targetType String
+  targetId   String
+  authorName String
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([targetType, targetId, createdAt])
 }
 
 model Account {

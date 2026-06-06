@@ -249,6 +249,7 @@ export default async function TeamYearPage({
       memberEyebrow="Thành viên"
       memberTitle="Gương mặt trong đội"
       pageKind="team"
+      socialId={`team:${category}:${team.year}`}
       stories={[...team.memoryPosts, ...fallbackTeamStories(teamName, team.year)].slice(0, 4)}
       storyEmptyText="Chưa có bài viết được công khai trong năm này."
       storyLabel={`${team.year} · Chia sẻ`}
